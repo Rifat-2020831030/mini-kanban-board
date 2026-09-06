@@ -180,12 +180,12 @@ export async function moveTask(req: Request, res: Response, next: NextFunction) 
         return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid afterTaskId' } });
       }
       beforeTask = await prisma.task.findFirst({
-        where: { column_id: toColumnId, position: { gt: afterTask.position }, deleted_at: null },
+        where: { column_id: toColumnId, id: { not: taskId }, position: { gt: afterTask.position }, deleted_at: null },
         orderBy: { position: 'asc' },
       });
     } else {
       beforeTask = await prisma.task.findFirst({
-        where: { column_id: toColumnId, deleted_at: null },
+        where: { column_id: toColumnId, id: { not: taskId }, deleted_at: null },
         orderBy: { position: 'asc' },
       });
     }

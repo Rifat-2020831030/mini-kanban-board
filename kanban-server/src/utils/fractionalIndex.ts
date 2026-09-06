@@ -15,13 +15,15 @@ export function computePosition(before: Decimal | null, after: Decimal | null): 
   }
   
   if (before === null && after !== null) {
-    return after.dividedBy(2);
+    // Target position is AFTER all items (moving to END)
+    return after.plus(1);
   }
   
   if (after === null && before !== null) {
-    return before.plus(1);
+    // Target position is BEFORE all items (moving to START)
+    return before.dividedBy(2);
   }
   
-  // Both are not null
+  // Target position is BETWEEN 'after' and 'before'
   return before!.plus(after!).dividedBy(2);
 }

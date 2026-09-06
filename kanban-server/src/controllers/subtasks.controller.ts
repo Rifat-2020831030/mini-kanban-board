@@ -62,12 +62,12 @@ export async function updateSubtask(req: Request, res: Response, next: NextFunct
           return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid afterSubtaskId' } });
         }
         beforeSub = await prisma.subtask.findFirst({
-          where: { task_id: taskId, position: { gt: afterSub.position } },
+          where: { task_id: taskId, id: { not: subtaskId }, position: { gt: afterSub.position } },
           orderBy: { position: 'asc' },
         });
       } else {
         beforeSub = await prisma.subtask.findFirst({
-          where: { task_id: taskId },
+          where: { task_id: taskId, id: { not: subtaskId } },
           orderBy: { position: 'asc' },
         });
       }

@@ -115,12 +115,12 @@ export async function moveColumn(req: Request, res: Response, next: NextFunction
         return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid afterColumnId' } });
       }
       beforeCol = await prisma.column.findFirst({
-        where: { board_id: boardId, position: { gt: afterCol.position }, deleted_at: null },
+        where: { board_id: boardId, id: { not: columnId }, position: { gt: afterCol.position }, deleted_at: null },
         orderBy: { position: 'asc' },
       });
     } else {
       beforeCol = await prisma.column.findFirst({
-        where: { board_id: boardId, deleted_at: null },
+        where: { board_id: boardId, id: { not: columnId }, deleted_at: null },
         orderBy: { position: 'asc' },
       });
     }
