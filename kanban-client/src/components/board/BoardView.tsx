@@ -54,6 +54,8 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
 
   const currentUserId = user?.id;
   const myRole = (board as any).my_board_role || (isAdmin ? 'OWNER' : 'MEMBER');
+  const isColumnAdmin = myRole === 'OWNER' || user?.role === 'ADMIN';
+  const isTaskAdmin = isColumnAdmin || myRole === 'EDITOR';
 
   const filteredBoard = useMemo(() => {
     if (!taskSearchQuery) return board;
@@ -102,6 +104,7 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
     const { type } = active.data.current || {};
 
     if (type === 'column') {
+      if (!isColumnAdmin) return;
       setActiveColumn(active.data.current?.column);
     } else if (type === 'task') {
       setActiveTask(active.data.current?.task);
@@ -233,7 +236,7 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <BoardHeader board={board} isAdmin={isAdmin} searchQuery={taskSearchQuery} onSearchChange={setTaskSearchQuery} />
+      <BoardHeader board={board} isAdmin={isColumnAdmin} searchQuery={taskSearchQuery} onSearchChange={setTaskSearchQuery} />
       
       <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-[#09090b]">
         <DndContext
@@ -251,7 +254,7 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
                   projectId={projectId}
                   boardId={board.id}
                   column={column}
-                  isAdmin={isAdmin}
+                  isAdmin={isColumnAdmin}
                   myRole={myRole}
                   currentUserId={currentUserId}
                   boardMembers={board.board_members || (board as any).members || []}
@@ -259,8 +262,8 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
               ))}
             </SortableContext>
             
-            {/* Add Column Button (Optional extra) */}
-            {isAdmin && (
+            {/* Add Column Button */}
+            {isColumnAdmin && (
               <CreateColumnModal
                 projectId={projectId}
                 boardId={board.id}

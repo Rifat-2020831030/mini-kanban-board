@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Plus, X } from 'lucide-react';
 
-export function TaskLabels({ task, boardId, projectId, isMember }: { task: Task, boardId: string, projectId: string, isMember: boolean }) {
+export function TaskLabels({ task, boardId, projectId, isMember, canManageBoardLabels }: { task: Task, boardId: string, projectId: string, isMember: boolean, canManageBoardLabels?: boolean }) {
   const queryClient = useQueryClient();
   const { addLabel, removeLabel } = useTaskLabels();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -94,7 +94,7 @@ export function TaskLabels({ task, boardId, projectId, isMember }: { task: Task,
                 <div className="text-[11px] font-semibold text-zinc-500 border-b border-zinc-800 pb-1">
                   Select Label
                 </div>
-                {availableLabels.length > 0 && (
+                {availableLabels.length > 0 ? (
                   <div className="flex flex-col gap-1 max-h-32 overflow-y-auto pr-1">
                     {availableLabels.map((l) => (
                       <button
@@ -108,33 +108,37 @@ export function TaskLabels({ task, boardId, projectId, isMember }: { task: Task,
                       </button>
                     ))}
                   </div>
+                ) : (
+                  <div className="text-xs text-zinc-500 py-1">No additional labels available</div>
                 )}
 
-                <form onSubmit={handleCreate} className="border-t border-zinc-800 pt-2 flex flex-col gap-2">
-                  <span className="text-[11px] font-medium text-zinc-400">Create New Label</span>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newLabelName}
-                      onChange={(e) => setNewLabelName(e.target.value)}
-                      placeholder="Label name..."
-                      className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-50 outline-none"
-                    />
-                    <input
-                      type="color"
-                      value={newLabelColor}
-                      onChange={(e) => setNewLabelColor(e.target.value)}
-                      className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={!newLabelName.trim() || createLabelMutation.isPending}
-                    className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 py-1 text-xs font-medium rounded disabled:opacity-50"
-                  >
-                    Create & Add
-                  </button>
-                </form>
+                {canManageBoardLabels && (
+                  <form onSubmit={handleCreate} className="border-t border-zinc-800 pt-2 flex flex-col gap-2">
+                    <span className="text-[11px] font-medium text-zinc-400">Create New Label</span>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newLabelName}
+                        onChange={(e) => setNewLabelName(e.target.value)}
+                        placeholder="Label name..."
+                        className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-50 outline-none"
+                      />
+                      <input
+                        type="color"
+                        value={newLabelColor}
+                        onChange={(e) => setNewLabelColor(e.target.value)}
+                        className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={!newLabelName.trim() || createLabelMutation.isPending}
+                      className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 py-1 text-xs font-medium rounded disabled:opacity-50"
+                    >
+                      Create & Add
+                    </button>
+                  </form>
+                )}
               </div>
             )}
           </div>

@@ -132,7 +132,7 @@ export function TaskModal({ projectId, boardId, taskId, myRole }: TaskModalProps
                   <div className="w-full md:w-56 shrink-0 flex flex-col gap-6">
                     <TaskMetadata task={task} updateTask={updateTask} isMember={!canEditTask} projectId={projectId} boardId={boardId} />
                     <TaskAssignees task={task} boardId={boardId} projectId={projectId} isMember={!canEditTask} />
-                    <TaskLabels task={task} boardId={boardId} projectId={projectId} isMember={!canEditTask} />
+                    <TaskLabels task={task} boardId={boardId} projectId={projectId} isMember={!canEditTask} canManageBoardLabels={isOwnerOrEditor} />
                   </div>
                 </div>
               </div>

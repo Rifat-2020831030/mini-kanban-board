@@ -69,23 +69,25 @@ export function BoardHeader({ board, isAdmin, searchQuery, onSearchChange }: Boa
               )}
             </div>
             
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-50 transition-colors"
-                title="Add Member"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-              
-              <Link
-                href={`/settings?boardId=${board.id}`}
-                className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-50 transition-colors"
-                title="Project Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </Link>
-            </div>
+            {isAdmin && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-50 transition-colors"
+                  title="Add Member"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                
+                <Link
+                  href={`/settings?boardId=${board.id}`}
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-50 transition-colors"
+                  title="Project Settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 

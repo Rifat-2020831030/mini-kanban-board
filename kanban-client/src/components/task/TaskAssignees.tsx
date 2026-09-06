@@ -11,6 +11,16 @@ export function TaskAssignees({ task, boardId, projectId, isMember }: { task: Ta
   const { addAssignee, removeAssignee } = useTaskAssignees();
   const [showDropdown, setShowDropdown] = useState(false);
 
+  const { data: userData } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const res = await api.get('/users/me');
+      return res.data.user;
+    }
+  });
+
+  const currentUserId = userData?.id;
+
   const { data: projectMembers } = useQuery({
     queryKey: ['project-members', projectId],
     queryFn: async () => {
@@ -27,6 +37,8 @@ export function TaskAssignees({ task, boardId, projectId, isMember }: { task: Ta
     return !assignedUserIds.has(uid);
   });
 
+  const isSelfAssigned = currentUserId ? assignedUserIds.has(currentUserId) : false;
+
   const handleAdd = (userId: string) => {
     addAssignee.mutate({ projectId, boardId, taskId: task.id, userId });
     setShowDropdown(false);
@@ -42,14 +54,17 @@ export function TaskAssignees({ task, boardId, projectId, isMember }: { task: Ta
       <div className="flex flex-wrap gap-2 items-center">
         {task.assignees?.map((a: any) => {
           const u = a.user || a;
+          const isSelf = u.id === currentUserId;
+          const canRemoveThis = !isMember || isSelf;
+
           return (
             <div key={u.id} className="flex items-center gap-2 bg-zinc-800 rounded-full pl-1.5 pr-3 py-1">
               <div className="w-5 h-5 rounded-full bg-zinc-700 flex items-center justify-center text-[9px] font-bold text-zinc-50 uppercase">
                 {u.username?.substring(0, 1)}
               </div>
               <span className="text-xs text-zinc-300">{u.username}</span>
-              {!isMember && (
-                <button onClick={() => handleRemove(u.id)} className="ml-1 text-zinc-500 hover:text-red-400">
+              {canRemoveThis && (
+                <button onClick={() => handleRemove(u.id)} className="ml-1 text-zinc-500 hover:text-red-400" title={isSelf ? "Remove myself" : "Remove assignee"}>
                   <X className="w-3 h-3" />
                 </button>
               )}
@@ -57,17 +72,25 @@ export function TaskAssignees({ task, boardId, projectId, isMember }: { task: Ta
           );
         })}
         
-        {!isMember && (
+        {/* If Admin/Editor (not isMember) OR if Member but not yet self-assigned */}
+        {(!isMember || !isSelfAssigned) && (
           <div className="relative">
             <button 
-              onClick={() => setShowDropdown(!showDropdown)}
+              onClick={() => {
+                if (isMember && currentUserId) {
+                  // Board MEMBER can assign self directly
+                  handleAdd(currentUserId);
+                } else {
+                  setShowDropdown(!showDropdown);
+                }
+              }}
               className="flex items-center justify-center w-7 h-7 rounded-full bg-zinc-900 border border-zinc-700 border-dashed text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800 transition-colors"
-              title="Add Assignee"
+              title={isMember ? "Assign to myself" : "Add Assignee"}
             >
               <Plus className="w-4 h-4" />
             </button>
 
-            {showDropdown && (
+            {!isMember && showDropdown && (
               <div className="absolute left-0 top-9 z-20 w-48 bg-zinc-900 border border-zinc-800 rounded-md shadow-xl py-1">
                 <div className="px-3 py-1 text-[11px] font-semibold text-zinc-500 border-b border-zinc-800">
                   Select Project Member
