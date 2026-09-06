@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../db';
 import { computePosition } from '../utils/fractionalIndex';
 import { Decimal } from '@prisma/client/runtime/library';
+import { io } from '../socket';
 
 export const createColumnSchema = z.object({
   body: z.object({
@@ -26,6 +27,7 @@ export async function createColumn(req: Request, res: Response, next: NextFuncti
       data: { board_id: boardId, name, position },
     });
 
+    io.to(`board:${boardId}`).emit('column:created', column);
     res.status(201).json(column);
   } catch (err) {
     next(err);
@@ -48,6 +50,7 @@ export async function renameColumn(req: Request, res: Response, next: NextFuncti
       data: { name },
     });
 
+    io.to(`board:${column.board_id}`).emit('column:renamed', column);
     res.json(column);
   } catch (err) {
     next(err);
@@ -92,6 +95,7 @@ export async function moveColumn(req: Request, res: Response, next: NextFunction
       data: { position: newPos },
     });
 
+    io.to(`board:${boardId}`).emit('column:moved', column);
     res.json(column);
   } catch (err) {
     next(err);
@@ -113,6 +117,12 @@ export async function deleteColumn(req: Request, res: Response, next: NextFuncti
         data: { deleted_at: now },
       });
     });
+
+    // Need to get board_id to emit
+    const col = await prisma.column.findUnique({ where: { id: columnId } });
+    if (col) {
+      io.to(`board:${col.board_id}`).emit('column:deleted', { id: columnId });
+    }
 
     res.json({ success: true });
   } catch (err) {

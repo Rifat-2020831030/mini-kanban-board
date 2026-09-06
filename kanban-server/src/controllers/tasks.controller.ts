@@ -63,6 +63,7 @@ export async function createTask(req: Request, res: Response, next: NextFunction
       return t;
     });
 
+    io.to(`board:${boardId}`).emit('task:created', task);
     res.status(201).json(task);
   } catch (err) {
     next(err);
@@ -109,6 +110,7 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
       data,
     });
 
+    io.to(`board:${task.board_id}`).emit('task:updated', task);
     res.json(task);
   } catch (err) {
     next(err);
@@ -175,6 +177,7 @@ export async function moveTask(req: Request, res: Response, next: NextFunction) 
       return t;
     });
 
+    io.to(`board:${boardId}`).emit('task:moved', task);
     res.json(task);
   } catch (err) {
     next(err);
@@ -190,6 +193,8 @@ export async function deleteTask(req: Request, res: Response, next: NextFunction
       data: { deleted_at: new Date() },
     });
 
+    const task = (req as any).task;
+    io.to(`board:${task.board_id}`).emit('task:deleted', { id: taskId });
     res.json({ success: true });
   } catch (err) {
     next(err);

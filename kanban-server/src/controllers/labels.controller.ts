@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db';
+import { io } from '../socket';
 
 export async function listLabels(req: Request, res: Response, next: NextFunction) {
   try {
@@ -28,6 +29,7 @@ export async function createLabel(req: Request, res: Response, next: NextFunctio
       data: { board_id: boardId, name, color },
     });
 
+    io.to(`board:${boardId}`).emit('label:created', label);
     res.status(201).json(label);
   } catch (err) {
     next(err);
@@ -51,6 +53,7 @@ export async function updateLabel(req: Request, res: Response, next: NextFunctio
       data: { name, color },
     });
 
+    io.to(`board:${label.board_id}`).emit('label:updated', label);
     res.json(label);
   } catch (err) {
     next(err);
@@ -61,7 +64,12 @@ export async function deleteLabel(req: Request, res: Response, next: NextFunctio
   try {
     const labelId = req.params.labelId;
 
+    const label = await prisma.label.findUnique({ where: { id: labelId } });
     await prisma.label.delete({ where: { id: labelId } });
+
+    if (label) {
+      io.to(`board:${label.board_id}`).emit('label:deleted', { id: labelId });
+    }
 
     res.json({ success: true });
   } catch (err) {
@@ -84,6 +92,8 @@ export async function tagTask(req: Request, res: Response, next: NextFunction) {
       data: { task_id: taskId, label_id: labelId },
     });
 
+    const task = (req as any).task;
+    io.to(`board:${task.board_id}`).emit('label:tagged', tag);
     res.status(201).json(tag);
   } catch (err) {
     next(err);
@@ -99,6 +109,8 @@ export async function untagTask(req: Request, res: Response, next: NextFunction)
       where: { task_id_label_id: { task_id: taskId, label_id: labelId } },
     });
 
+    const task = (req as any).task;
+    io.to(`board:${task.board_id}`).emit('label:untagged', { task_id: taskId, label_id: labelId });
     res.json({ success: true });
   } catch (err) {
     next(err);

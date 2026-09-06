@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db';
+import { io } from '../socket';
 
 export async function listBoardMembers(req: Request, res: Response, next: NextFunction) {
   try {
@@ -42,6 +43,7 @@ export async function addBoardMember(req: Request, res: Response, next: NextFunc
       include: { user: { select: { id: true, username: true, email: true } } },
     });
 
+    io.to(`board:${boardId}`).emit('member:added', newMember);
     res.status(201).json(newMember);
   } catch (err) {
     next(err);
@@ -66,6 +68,7 @@ export async function updateBoardMember(req: Request, res: Response, next: NextF
       include: { user: { select: { id: true, username: true, email: true } } },
     });
 
+    io.to(`board:${member.board_id}`).emit('member:updated', member);
     res.json(member);
   } catch (err) {
     next(err);
@@ -88,6 +91,7 @@ export async function removeBoardMember(req: Request, res: Response, next: NextF
 
     await prisma.boardMember.delete({ where: { id: memberId } });
 
+    io.to(`board:${member.board_id}`).emit('member:removed', { id: memberId });
     res.json({ success: true });
   } catch (err) {
     next(err);

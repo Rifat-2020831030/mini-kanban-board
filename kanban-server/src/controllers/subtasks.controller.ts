@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../db';
 import { computePosition } from '../utils/fractionalIndex';
 import { Decimal } from '@prisma/client/runtime/library';
+import { io } from '../socket';
 
 export const createSubtaskSchema = z.object({
   body: z.object({
@@ -26,6 +27,8 @@ export async function createSubtask(req: Request, res: Response, next: NextFunct
       data: { task_id: taskId, title, position },
     });
 
+    const task = (req as any).task;
+    io.to(`board:${task.board_id}`).emit('subtask:created', subtask);
     res.status(201).json(subtask);
   } catch (err) {
     next(err);
@@ -76,6 +79,8 @@ export async function updateSubtask(req: Request, res: Response, next: NextFunct
       data,
     });
 
+    const task = (req as any).task;
+    io.to(`board:${task.board_id}`).emit('subtask:updated', subtask);
     res.json(subtask);
   } catch (err) {
     next(err);
@@ -88,6 +93,8 @@ export async function deleteSubtask(req: Request, res: Response, next: NextFunct
 
     await prisma.subtask.delete({ where: { id: subtaskId } });
 
+    const task = (req as any).task;
+    io.to(`board:${task.board_id}`).emit('subtask:deleted', { id: subtaskId });
     res.json({ success: true });
   } catch (err) {
     next(err);
