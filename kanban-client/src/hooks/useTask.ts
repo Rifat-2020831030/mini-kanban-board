@@ -7,7 +7,7 @@ export function useTask(projectId: string, boardId: string, taskId: string | nul
     queryKey: ['task', taskId],
     queryFn: async () => {
       const res = await api.get(`/boards/${boardId}/tasks/${taskId}`);
-      return res.data.task as Task;
+      return res.data as Task;
     },
     enabled: !!projectId && !!boardId && !!taskId,
   });

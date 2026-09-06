@@ -19,7 +19,7 @@ export function useUpdateTask() {
       const payload: any = { ...data };
       if (due_date !== undefined) payload.dueDate = due_date;
       const res = await api.patch(`/boards/${boardId}/tasks/${taskId}`, payload);
-      return res.data.task;
+      return res.data;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task', variables.taskId] });

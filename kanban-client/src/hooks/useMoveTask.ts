@@ -19,7 +19,7 @@ export function useMoveTask() {
         toColumnId: columnId,
         afterTaskId,
       });
-      return res.data.task;
+      return res.data;
     },
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: ['board', variables.boardId] });

@@ -19,7 +19,7 @@ export function useCreateTask() {
         title,
         priority,
       });
-      return res.data.task;
+      return res.data;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['board', variables.boardId] });
