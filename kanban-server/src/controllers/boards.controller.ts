@@ -28,9 +28,23 @@ export async function createBoard(req: Request, res: Response, next: NextFunctio
       const b = await tx.board.create({
         data: { project_id: projectId, name, description, created_by: userId },
       });
-      await tx.boardMember.create({
-        data: { board_id: b.id, user_id: userId, role: 'OWNER' },
+
+      const projectMembers = await tx.projectMember.findMany({
+        where: { project_id: projectId },
       });
+
+      for (const pm of projectMembers) {
+        await tx.boardMember.upsert({
+          where: { board_id_user_id: { board_id: b.id, user_id: pm.user_id } },
+          create: {
+            board_id: b.id,
+            user_id: pm.user_id,
+            role: pm.user_id === userId ? 'OWNER' : (pm.role === 'ADMIN' ? 'OWNER' : 'MEMBER'),
+          },
+          update: {},
+        });
+      }
+
       return b;
     });
 
@@ -61,20 +75,18 @@ export async function listBoards(req: Request, res: Response, next: NextFunction
       where: {
         project_id: projectId,
         deleted_at: null,
-        OR: [
-          { board_members: { some: { user_id: userId } } },
-          ...(projectMember.role === 'ADMIN' ? [{}] : [])
-        ]
       },
       include: {
         board_members: { where: { user_id: userId } },
+        _count: { select: { board_members: true } },
       }
     });
 
     const mapped = boards.map(b => ({
       ...b,
-      my_board_role: b.board_members[0]?.role || (projectMember.role === 'ADMIN' ? 'OWNER' : null),
-      board_members: undefined
+      my_board_role: b.board_members[0]?.role || (projectMember.role === 'ADMIN' ? 'OWNER' : 'MEMBER'),
+      board_members: undefined,
+      member_count: b._count.board_members,
     }));
 
     res.json(mapped);

@@ -4,7 +4,7 @@ import { prisma } from '../db';
 
 export async function listMembers(req: Request, res: Response, next: NextFunction) {
   try {
-    const projectId = req.params.projectId;
+    const projectId = req.params.projectId as string;
     const members = await prisma.projectMember.findMany({
       where: { project_id: projectId },
       include: { user: { select: { id: true, username: true, email: true } } },
@@ -24,7 +24,7 @@ export const inviteMemberSchema = z.object({
 
 export async function inviteMember(req: Request, res: Response, next: NextFunction) {
   try {
-    const projectId = req.params.projectId;
+    const projectId = req.params.projectId as string;
     const { email, role } = req.body;
     const userId = req.user!.userId;
 
@@ -33,7 +33,7 @@ export async function inviteMember(req: Request, res: Response, next: NextFuncti
     });
 
     if (!targetUser) {
-      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User with this email not found. They must create an account first.' } });
     }
 
     if (targetUser.id === userId) {
@@ -46,14 +46,36 @@ export async function inviteMember(req: Request, res: Response, next: NextFuncti
 
     if (inProject) {
       if (inProject.project_id === projectId) {
-        return res.status(409).json({ error: { code: 'ALREADY_MEMBER', message: 'User already in this project' } });
+        return res.status(409).json({ error: { code: 'ALREADY_MEMBER', message: 'User is already a member of this project.' } });
       }
-      return res.status(409).json({ error: { code: 'ALREADY_IN_PROJECT', message: 'User already in another project' } });
+      return res.status(409).json({ error: { code: 'ALREADY_IN_PROJECT', message: 'User is already a member of another project.' } });
     }
 
-    const member = await prisma.projectMember.create({
-      data: { project_id: projectId, user_id: targetUser.id, role },
-      include: { user: { select: { id: true, username: true, email: true } } },
+    const member = await prisma.$transaction(async (tx) => {
+      const pm = await tx.projectMember.create({
+        data: { project_id: projectId, user_id: targetUser.id, role },
+        include: { user: { select: { id: true, username: true, email: true } } },
+      });
+
+      const boards = await tx.board.findMany({
+        where: { project_id: projectId, deleted_at: null },
+      });
+
+      for (const board of boards) {
+        await tx.boardMember.upsert({
+          where: { board_id_user_id: { board_id: board.id, user_id: targetUser.id } },
+          create: {
+            board_id: board.id,
+            user_id: targetUser.id,
+            role: role === 'ADMIN' ? 'OWNER' : 'MEMBER',
+          },
+          update: {
+            role: role === 'ADMIN' ? 'OWNER' : 'MEMBER',
+          },
+        });
+      }
+
+      return pm;
     });
 
     res.status(201).json(member);
@@ -70,14 +92,29 @@ export const updateMemberRoleSchema = z.object({
 
 export async function updateMemberRole(req: Request, res: Response, next: NextFunction) {
   try {
-    const projectId = req.params.projectId;
-    const memberId = req.params.memberId;
+    const projectId = req.params.projectId as string;
+    const memberId = req.params.memberId as string;
     const { role } = req.body;
 
-    const member = await prisma.projectMember.update({
-      where: { id: memberId },
-      data: { role },
-      include: { user: { select: { id: true, username: true, email: true } } },
+    const member = await prisma.$transaction(async (tx) => {
+      const pm = await tx.projectMember.update({
+        where: { id: memberId },
+        data: { role },
+        include: { user: { select: { id: true, username: true, email: true } } },
+      });
+
+      const boards = await tx.board.findMany({
+        where: { project_id: projectId, deleted_at: null },
+      });
+
+      for (const board of boards) {
+        await tx.boardMember.updateMany({
+          where: { board_id: board.id, user_id: pm.user_id },
+          data: { role: role === 'ADMIN' ? 'OWNER' : 'MEMBER' },
+        });
+      }
+
+      return pm;
     });
 
     res.json(member);
@@ -88,7 +125,7 @@ export async function updateMemberRole(req: Request, res: Response, next: NextFu
 
 export async function removeMember(req: Request, res: Response, next: NextFunction) {
   try {
-    const memberId = req.params.memberId;
+    const memberId = req.params.memberId as string;
     
     const member = await prisma.projectMember.findUnique({ where: { id: memberId } });
     if (!member) {

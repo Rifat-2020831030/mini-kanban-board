@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Settings, Users, Shield, Trash2, Loader2, Plus, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Project, ProjectMember, User } from '@/types/api';
 
-export default function SettingsPage() {
+function SettingsContent() {
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const boardId = searchParams.get('boardId');
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -70,6 +73,8 @@ export default function SettingsPage() {
       setInviteEmail('');
       setInviteRole('MEMBER');
       queryClient.invalidateQueries({ queryKey: ['project', project?.id, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['board'] });
     }
   });
 
@@ -80,6 +85,8 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', project?.id, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['board'] });
     }
   });
 
@@ -89,6 +96,8 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', project?.id, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['board'] });
     }
   });
 
@@ -123,14 +132,17 @@ export default function SettingsPage() {
     );
   }
 
+  const backHref = boardId ? `/boards/${boardId}` : '/boards';
+  const backText = boardId ? 'Back to Board' : 'Back to Boards';
+
   return (
     <div className="p-8 max-w-4xl mx-auto w-full">
       <Link 
-        href="/boards" 
+        href={backHref} 
         className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-50 transition-colors mb-6"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to Boards
+        {backText}
       </Link>
 
       <div className="mb-8">
@@ -256,7 +268,9 @@ export default function SettingsPage() {
                 </button>
               </form>
               {inviteMemberMutation.isError && (
-                <p className="text-red-400 text-sm mt-2">User with this email not found. They must create an account first.</p>
+                <p className="text-red-400 text-sm mt-2">
+                  {(inviteMemberMutation.error as any)?.response?.data?.error?.message || 'Failed to invite member.'}
+                </p>
               )}
             </div>
           )}
@@ -330,5 +344,13 @@ export default function SettingsPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-zinc-400" /></div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }

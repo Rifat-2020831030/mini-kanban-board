@@ -10,8 +10,10 @@ export function TaskLifecycle({ taskId, boardId, projectId }: { taskId: string, 
     queryKey: ['task', taskId, 'lifecycle'],
     queryFn: async () => {
       const res = await api.get(`/boards/${boardId}/tasks/${taskId}/lifecycle`);
-      return res.data.events as TaskLifecycleEvent[];
-    }
+      const list = Array.isArray(res.data) ? res.data : (res.data?.events || []);
+      return list as TaskLifecycleEvent[];
+    },
+    enabled: !!boardId && !!taskId,
   });
 
   if (isLoading) return <div className="animate-pulse h-10 bg-zinc-800 rounded-md w-full mt-4"></div>;

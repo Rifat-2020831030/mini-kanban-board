@@ -133,6 +133,112 @@ erDiagram
     tasks ||--o{ task_lifecycle_events : "tracks lifecycle of"
     users ||--o{ task_lifecycle_events : "performed by"
     columns ||--o{ task_lifecycle_events : "from/to"
+
+    users {
+        UUID id PK
+        VARCHAR username
+        VARCHAR email
+        VARCHAR password_hash
+    }
+
+    refresh_tokens {
+        UUID id PK
+        UUID user_id FK
+        VARCHAR token_hash
+        TIMESTAMPTZ expires_at
+    }
+
+    projects {
+        UUID id PK
+        VARCHAR name
+        TEXT description
+        UUID created_by FK
+        BOOLEAN is_archived
+    }
+
+    project_members {
+        UUID id PK
+        UUID project_id FK
+        UUID user_id FK
+        ENUM role "ADMIN | MEMBER"
+    }
+
+    boards {
+        UUID id PK
+        UUID project_id FK
+        VARCHAR name
+        TEXT description
+        UUID created_by FK
+        TIMESTAMPTZ deleted_at
+    }
+
+    board_members {
+        UUID id PK
+        UUID board_id FK
+        UUID user_id FK
+        ENUM role "OWNER | EDITOR | MEMBER"
+        VARCHAR job_title
+    }
+
+    columns {
+        UUID id PK
+        UUID board_id FK
+        VARCHAR name
+        DECIMAL position
+        TIMESTAMPTZ deleted_at
+    }
+
+    labels {
+        UUID id PK
+        UUID board_id FK
+        VARCHAR name
+        VARCHAR color
+    }
+
+    tasks {
+        UUID id PK
+        UUID column_id FK
+        UUID board_id FK
+        UUID project_id FK
+        UUID created_by FK
+        VARCHAR title
+        TEXT description
+        TIMESTAMPTZ due_date
+        ENUM priority "NONE | LOW | MEDIUM | HIGH"
+        DECIMAL position
+        TIMESTAMPTZ deleted_at
+    }
+
+    task_assignees {
+        UUID task_id PK,FK
+        UUID user_id PK,FK
+        UUID assigned_by FK
+    }
+
+    task_labels {
+        UUID task_id PK,FK
+        UUID label_id PK,FK
+    }
+
+    subtasks {
+        UUID id PK
+        UUID task_id FK
+        VARCHAR title
+        BOOLEAN is_completed
+        DECIMAL position
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+
+    task_lifecycle_events {
+        UUID id PK
+        UUID task_id FK
+        UUID user_id FK
+        VARCHAR action_type
+        UUID from_column_id FK
+        UUID to_column_id FK
+        TIMESTAMPTZ created_at
+    }
 ```
 
 ### API Design
@@ -146,54 +252,207 @@ POST   /api/auth/refresh
 DELETE /api/auth/logout
 
 GET    /api/users/me
-PUT    /api/users/me
+PATCH  /api/users/me
 
 POST   /api/projects
 GET    /api/projects/me
-PUT    /api/projects/:projectId
+PATCH  /api/projects/:projectId
 GET    /api/projects/:projectId/members
 POST   /api/projects/:projectId/members
-PUT    /api/projects/:projectId/members/:memberId
+PATCH  /api/projects/:projectId/members/:memberId
 DELETE /api/projects/:projectId/members/:memberId
 
 GET    /api/boards?projectId=
 POST   /api/boards
 GET    /api/boards/:boardId
-PUT    /api/boards/:boardId
+PATCH  /api/boards/:boardId
 DELETE /api/boards/:boardId
 GET    /api/boards/:boardId/members
 POST   /api/boards/:boardId/members
-...
+PATCH  /api/boards/:boardId/members/:memberId
+DELETE /api/boards/:boardId/members/:memberId
 
 GET    /api/boards/:boardId/columns
 POST   /api/boards/:boardId/columns
-PUT    /api/boards/:boardId/columns/:columnId
+PATCH  /api/boards/:boardId/columns/:columnId
 DELETE /api/boards/:boardId/columns/:columnId
 
 GET    /api/boards/:boardId/tasks
 POST   /api/boards/:boardId/tasks
 GET    /api/boards/:boardId/tasks/:taskId
-PUT    /api/boards/:boardId/tasks/:taskId
+PATCH  /api/boards/:boardId/tasks/:taskId
 DELETE /api/boards/:boardId/tasks/:taskId
-...
+GET    /api/boards/:boardId/tasks/:taskId/assignees
+POST   /api/boards/:boardId/tasks/:taskId/assignees
+DELETE /api/boards/:boardId/tasks/:taskId/assignees/:userId
+GET    /api/boards/:boardId/labels
+POST   /api/boards/:boardId/labels
+PATCH  /api/boards/:boardId/labels/:labelId
+DELETE /api/boards/:boardId/labels/:labelId
+POST   /api/boards/:boardId/tasks/:taskId/labels
+DELETE /api/boards/:boardId/tasks/:taskId/labels/:labelId
+GET    /api/boards/:boardId/tasks/:taskId/subtasks
+POST   /api/boards/:boardId/tasks/:taskId/subtasks
+PATCH  /api/boards/:boardId/tasks/:taskId/subtasks/:subtaskId
+DELETE /api/boards/:boardId/tasks/:taskId/subtasks/:subtaskId
 ```
 
-### Real-time Events
+### Sequence Diagrams
 
-When a client opens a board, it joins the Socket.io room `board:<boardId>`. Any mutation to that board's data emits a corresponding event to all members of the room:
+The following diagrams illustrate the key interaction flows between the client, API, database, and Socket.io server.
 
-| Event            | Trigger                                          |
-| ---------------- | ------------------------------------------------ |
-| `task:created`   | A task is created                                |
-| `task:updated`   | A task's fields, position, or column are changed |
-| `task:deleted`   | A task is soft-deleted                           |
-| `column:created` | A new column is added                            |
-| `column:updated` | A column is renamed or reordered                 |
-| `column:deleted` | A column is deleted                              |
-| `label:created`  | A label is created                               |
-| `label:updated`  | A label is edited                                |
-| `label:deleted`  | A label is deleted                               |
-| `member:updated` | A board member's role or job title changes       |
+#### 1. User Registration and Login
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Client
+    participant API
+    participant DB
+
+    User->>Client: Enter Registration Details
+    Client->>API: POST /api/auth/register
+    API->>DB: Check email/username uniqueness
+    DB-->>API: OK (Not found)
+    API->>DB: Insert User (hash password)
+    DB-->>API: Created
+    API-->>Client: 201 Created
+
+    User->>Client: Enter Login Details
+    Client->>API: POST /api/auth/login
+    API->>DB: Fetch user by email
+    DB-->>API: User Record
+    API->>API: Verify Password
+    API->>DB: Generate & Store Refresh Token
+    API-->>Client: 200 OK (AccessToken + RefreshToken)
+    Client->>Client: Store tokens in local storage
+    Client->>User: Redirect to /boards
+```
+
+#### 2. Project Creation and Member Invitation
+
+```mermaid
+sequenceDiagram
+    actor Admin
+    participant Client
+    participant API
+    participant DB
+    actor Invitee
+
+    Admin->>Client: Create Project "Marketing"
+    Client->>API: POST /api/projects
+    API->>DB: Insert Project
+    API->>DB: Insert Project Member (role: ADMIN)
+    DB-->>API: Success
+    API-->>Client: 201 Created
+
+    Admin->>Client: Invite "alice@example.com" to Project
+    Client->>API: POST /api/projects/:id/members
+    API->>DB: Find User by Email
+    DB-->>API: User (Alice)
+    API->>DB: Insert Project Member (role: MEMBER)
+    DB-->>API: Success
+    API-->>Client: 201 Created
+
+    Invitee->>Client: Log in
+    Client->>API: GET /api/projects/me
+    API->>DB: Fetch Project for User
+    DB-->>API: "Marketing" Project
+    API-->>Client: 200 OK
+    Client->>Invitee: Show Project Dashboard
+```
+
+#### 3. Real-time Task Movement (Drag and Drop)
+
+```mermaid
+sequenceDiagram
+    actor UserA
+    participant ClientA
+    participant API
+    participant DB
+    participant SocketIO
+    participant ClientB
+    actor UserB
+
+    ClientA->>SocketIO: Connect & Join `board:123`
+    ClientB->>SocketIO: Connect & Join `board:123`
+
+    UserA->>ClientA: Drag Task X to "Done" Column
+    ClientA->>ClientA: Optimistic UI Update (Task in "Done")
+    ClientA->>API: PATCH /api/boards/.../tasks/X
+    API->>DB: Update Task Column & Position
+    API->>DB: Insert task_lifecycle_events (action: MOVED)
+    DB-->>API: Success
+
+    par Real-time Broadcast
+        API->>SocketIO: Emit `task:updated`
+        SocketIO-->>ClientB: Event: `task:updated`
+        ClientB->>ClientB: Update UI (Task X moves to "Done")
+        ClientB->>UserB: Sees task move in real-time
+    and HTTP Response
+        API-->>ClientA: 200 OK
+        ClientA->>ClientA: Reconcile position with DB response
+    end
+```
+
+#### 4. Sub-task Management
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Client
+    participant API
+    participant DB
+
+    User->>Client: Click "Add Sub-task" on Task X
+    Client->>API: POST /api/.../tasks/X/subtasks { title: "Draft Copy" }
+    API->>DB: Insert Sub-task (position: bottom)
+    DB-->>API: Success
+    API-->>Client: 201 Created
+    Client->>User: UI displays new Sub-task
+
+    User->>Client: Click Checkbox (Complete Sub-task)
+    Client->>Client: Optimistic UI Update (Checkmark checked)
+    Client->>API: PATCH /api/.../subtasks/Y { is_completed: true }
+    API->>DB: Update is_completed = true
+    DB-->>API: Success
+    API-->>Client: 200 OK
+    Client->>Client: Confirm UI state
+```
+
+#### 5. Task Ownership and Handoff
+
+```mermaid
+sequenceDiagram
+    actor Developer
+    participant Client
+    participant API
+    participant DB
+    actor QA_Tester
+
+    note over Developer, DB: Scenario A: Creating a new task
+    Developer->>Client: Create task "Fix Login Bug"
+    Client->>API: POST /api/.../tasks { title: "Fix Login Bug" }
+    API->>DB: Insert Task
+    API->>DB: Insert task_lifecycle_events (action: CREATED)
+    API->>DB: Insert Task Assignee (UserId = Developer)
+    DB-->>API: Success
+    API-->>Client: 201 Created (Developer is auto-assigned)
+
+    note over Developer, QA_Tester: Scenario B: Handoff from Dev to QA
+    Developer->>Client: Assign "QA Tester" to Task Y
+    Client->>API: POST /api/.../tasks/Y/assignees { userId: QA_Tester }
+    API->>DB: Insert Task Assignee
+    DB-->>API: Success
+    API-->>Client: 201 Created
+
+    Developer->>Client: Remove self from Task Y
+    Client->>API: DELETE /api/.../tasks/Y/assignees/Developer
+    API->>DB: Delete Task Assignee
+    DB-->>API: Success
+    API-->>Client: 204 No Content
+    Client->>Developer: Task Y is now read-only for Developer
+```
 
 ---
 
@@ -201,14 +460,13 @@ When a client opens a board, it joins the Socket.io room `board:<boardId>`. Any 
 
 All specification documents are located in the [`project-artifacts/`](./project-artifacts) directory.
 
-| Document                                                               | Description                                                                        |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [`feature-spec.md`](./project-artifacts/feature-spec.md)               | Software Requirements Specification with all functional requirements and use cases |
-| [`api-spec.md`](./project-artifacts/api-spec.md)                       | Complete REST API endpoint contracts with request and response shapes              |
-| [`er-diagram.md`](./project-artifacts/er-diagram.md)                   | PostgreSQL entity-relationship diagram for all 13 tables                           |
-| [`sequence-diagrams.md`](./project-artifacts/sequence-diagrams.md)     | Backend execution flow diagrams for major operations                               |
-| [`design-system.md`](./project-artifacts/design-system.md)             | UI design tokens, color palette, typography, and component conventions             |
-| [`implementation-plan.md`](./project-artifacts/implementation-plan.md) | Implementation plan with dependency Gantt chart                                    |
+| Document                                                           | Description                                                                        |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| [`feature-spec.md`](./project-artifacts/feature-spec.md)           | Software Requirements Specification with all functional requirements and use cases |
+| [`api-spec.md`](./project-artifacts/api-spec.md)                   | Complete REST API endpoint contracts with request and response shapes              |
+| [`er-diagram.md`](./project-artifacts/er-diagram.md)               | PostgreSQL entity-relationship diagram for all 13 tables                           |
+| [`sequence-diagrams.md`](./project-artifacts/sequence-diagrams.md) | Interaction flow diagrams for major operations                                     |
+| [`design-system.md`](./project-artifacts/design-system.md)         | UI design tokens, color palette, typography, and component conventions             |
 
 ---
 

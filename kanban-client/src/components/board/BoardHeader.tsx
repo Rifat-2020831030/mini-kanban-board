@@ -3,7 +3,7 @@ import { Search, Plus, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { BoardData } from '@/hooks/useBoardData';
 import { BoardMembersModal } from './BoardMembersModal';
-import { ProjectMember } from '@/types/api';
+import { BoardMember, ProjectMember } from '@/types/api';
 
 interface BoardHeaderProps {
   board: BoardData;
@@ -27,7 +27,7 @@ const getRoleColor = (role: string) => {
 
 export function BoardHeader({ board, isAdmin, searchQuery, onSearchChange }: BoardHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const members = board.members || [];
+  const members: BoardMember[] = board.board_members || (board as any).members || [];
   const displayMembers = members.slice(0, 5);
   const excess = members.length - 5;
 
@@ -79,7 +79,7 @@ export function BoardHeader({ board, isAdmin, searchQuery, onSearchChange }: Boa
               </button>
               
               <Link
-                href="/settings"
+                href={`/settings?boardId=${board.id}`}
                 className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-50 transition-colors"
                 title="Project Settings"
               >

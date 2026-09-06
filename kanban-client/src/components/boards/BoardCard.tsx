@@ -15,7 +15,7 @@ export function BoardCard({ board }: BoardCardProps) {
     badgeColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
   }
 
-  const memberCount = board.members ? board.members.length : 0;
+  const memberCount = board.member_count ?? board.board_members?.length ?? board.members?.length ?? 0;
 
   return (
     <Link 

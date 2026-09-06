@@ -68,13 +68,14 @@ export function requireBoardAccess() {
     }
 
     const isBoardMember = board.board_members.length > 0;
+    const isProjectMember = board.project.project_members.length > 0;
     const isProjectAdmin = board.project.project_members.some(pm => pm.role === 'ADMIN');
 
-    if (!isBoardMember && !isProjectAdmin) {
+    if (!isBoardMember && !isProjectMember) {
       return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'No access to this board' } });
     }
 
-    (req as any).boardRole = isBoardMember ? board.board_members[0].role : null;
+    (req as any).boardRole = isBoardMember ? board.board_members[0].role : (isProjectAdmin ? 'OWNER' : 'MEMBER');
     (req as any).isProjectAdmin = isProjectAdmin;
     (req as any).board = board;
     next();

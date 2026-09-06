@@ -30,6 +30,8 @@ export interface Board {
   columns?: Column[];
   labels?: Label[];
   members?: BoardMember[];
+  board_members?: BoardMember[];
+  member_count?: number;
 }
 
 export interface BoardMember {

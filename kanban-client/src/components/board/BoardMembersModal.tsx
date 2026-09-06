@@ -42,6 +42,7 @@ export function BoardMembersModal({ members, projectId, isAdmin, open, onOpenCha
       setInviteEmail('');
       setInviteRole('MEMBER');
       queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['board'] });
       queryClient.invalidateQueries({ queryKey: ['project', projectId, 'members'] });
     }
   });
@@ -105,7 +106,9 @@ export function BoardMembersModal({ members, projectId, isAdmin, open, onOpenCha
                   Invite
                 </button>
                 {inviteMemberMutation.isError && (
-                  <p className="text-red-400 text-xs text-center">User not found. They must sign up first.</p>
+                  <p className="text-red-400 text-xs text-center">
+                    {(inviteMemberMutation.error as any)?.response?.data?.error?.message || 'Failed to invite member.'}
+                  </p>
                 )}
               </form>
             )}
