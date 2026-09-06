@@ -6,6 +6,7 @@ import { projectsRoutes } from './projects.routes';
 import { projectMembersRoutes } from './projectMembers.routes';
 import { boardsRoutes } from './boards.routes';
 import { boardMembersRoutes } from './boardMembers.routes';
+import { columnsRoutes } from './columns.routes';
 
 export const routes = Router();
 
@@ -19,3 +20,4 @@ routes.use('/projects', projectsRoutes);
 routes.use('/projects/:projectId/members', projectMembersRoutes);
 routes.use('/boards', boardsRoutes);
 routes.use('/boards/:boardId/members', boardMembersRoutes);
+routes.use('/boards/:boardId/columns', columnsRoutes);
