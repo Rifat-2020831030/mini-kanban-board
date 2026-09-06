@@ -17,18 +17,19 @@ export async function listMembers(req: Request, res: Response, next: NextFunctio
 
 export const inviteMemberSchema = z.object({
   body: z.object({
-    emailOrUsername: z.string(),
+    email: z.string().email("Invalid email format"),
+    role: z.enum(['ADMIN', 'MEMBER']).optional().default('MEMBER'),
   }),
 });
 
 export async function inviteMember(req: Request, res: Response, next: NextFunction) {
   try {
     const projectId = req.params.projectId;
-    const { emailOrUsername } = req.body;
+    const { email, role } = req.body;
     const userId = req.user!.userId;
 
     const targetUser = await prisma.user.findFirst({
-      where: { OR: [{ email: emailOrUsername }, { username: emailOrUsername }] },
+      where: { email },
     });
 
     if (!targetUser) {
@@ -51,7 +52,7 @@ export async function inviteMember(req: Request, res: Response, next: NextFuncti
     }
 
     const member = await prisma.projectMember.create({
-      data: { project_id: projectId, user_id: targetUser.id, role: 'MEMBER' },
+      data: { project_id: projectId, user_id: targetUser.id, role },
       include: { user: { select: { id: true, username: true, email: true } } },
     });
 
