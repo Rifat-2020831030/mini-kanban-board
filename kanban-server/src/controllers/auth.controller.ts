@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db';
 import { hashPassword, verifyPassword } from '../utils/hash';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 
 export const registerSchema = z.object({
   body: z.object({
@@ -85,8 +85,28 @@ export const refreshSchema = z.object({
 });
 
 export async function refresh(req: Request, res: Response, next: NextFunction) {
-  // Simple implementation
-  res.json({ message: 'Not fully implemented yet' });
+  try {
+    const { refreshToken } = req.body;
+    
+    let payload;
+    try {
+      payload = verifyRefreshToken(refreshToken);
+    } catch (e) {
+      return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Invalid refresh token' } });
+    }
+
+    const newPayload = { userId: payload.userId };
+    const newAccessToken = generateAccessToken(newPayload);
+    const newRefreshToken = generateRefreshToken(newPayload);
+
+    await prisma.refreshToken.create({
+      data: { user_id: payload.userId, token_hash: await hashPassword(newRefreshToken), expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+    });
+
+    res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
+  } catch (err) {
+    next(err);
+  }
 }
 
 export async function logout(req: Request, res: Response, next: NextFunction) {
