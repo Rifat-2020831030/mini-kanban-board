@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Loader2, Plus, Shield, Users } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BoardMember } from '@/types/api';
 import { api } from '@/lib/api';
 
@@ -33,6 +33,17 @@ export function BoardMembersModal({ members, projectId, isAdmin, open, onOpenCha
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'ADMIN' | 'MEMBER'>('MEMBER');
 
+  const { data: projectMembers } = useQuery({
+    queryKey: ['project-members', projectId],
+    queryFn: async () => {
+      const res = await api.get(`/projects/${projectId}/members`);
+      return res.data;
+    },
+    enabled: !!projectId && open,
+  });
+
+  const displayMembers = (projectMembers && projectMembers.length > 0) ? projectMembers : members;
+
   const inviteMemberMutation = useMutation({
     mutationFn: async (data: { email: string, role: string }) => {
       const res = await api.post(`/projects/${projectId}/members`, data);
@@ -43,7 +54,7 @@ export function BoardMembersModal({ members, projectId, isAdmin, open, onOpenCha
       setInviteRole('MEMBER');
       queryClient.invalidateQueries({ queryKey: ['boards'] });
       queryClient.invalidateQueries({ queryKey: ['board'] });
-      queryClient.invalidateQueries({ queryKey: ['project', projectId, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
     }
   });
 
@@ -113,15 +124,15 @@ export function BoardMembersModal({ members, projectId, isAdmin, open, onOpenCha
               </form>
             )}
 
-            {members.map((member) => (
+            {displayMembers.map((member: any) => (
               <div key={member.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-zinc-800/50">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 border ${getRoleColor(member.role)}`}>
-                  {member.user.username.charAt(0).toUpperCase()}
+                  {member.user?.username ? member.user.username.charAt(0).toUpperCase() : '?'}
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium text-zinc-100 truncate">
-                      {member.user.username}
+                      {member.user?.username}
                     </span>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-medium border ${getRoleColor(member.role)}`}>
                       {(member.role as string) === 'OWNER' && <Shield className="w-3 h-3 inline-block mr-1" />}
@@ -129,7 +140,7 @@ export function BoardMembersModal({ members, projectId, isAdmin, open, onOpenCha
                     </span>
                   </div>
                   <span className="text-xs text-zinc-500 truncate">
-                    {member.user.email}
+                    {member.user?.email}
                   </span>
                   {member.job_title && (
                     <span className="text-xs text-zinc-400 truncate mt-0.5">
@@ -139,7 +150,7 @@ export function BoardMembersModal({ members, projectId, isAdmin, open, onOpenCha
                 </div>
               </div>
             ))}
-            {members.length === 0 && (
+            {displayMembers.length === 0 && (
               <div className="text-sm text-zinc-400 text-center py-4">
                 No members found.
               </div>

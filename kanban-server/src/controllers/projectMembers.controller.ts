@@ -41,14 +41,11 @@ export async function inviteMember(req: Request, res: Response, next: NextFuncti
     }
 
     const inProject = await prisma.projectMember.findFirst({
-      where: { user_id: targetUser.id },
+      where: { project_id: projectId, user_id: targetUser.id },
     });
 
     if (inProject) {
-      if (inProject.project_id === projectId) {
-        return res.status(409).json({ error: { code: 'ALREADY_MEMBER', message: 'User is already a member of this project.' } });
-      }
-      return res.status(409).json({ error: { code: 'ALREADY_IN_PROJECT', message: 'User is already a member of another project.' } });
+      return res.status(409).json({ error: { code: 'ALREADY_MEMBER', message: 'User is already a member of this project.' } });
     }
 
     const member = await prisma.$transaction(async (tx) => {
