@@ -106,11 +106,19 @@ export default function BoardsPage() {
           )}
         </div>
 
-        {projectData && isProjectAdmin && (
+        {projectData && (
           <CreateBoardModal 
             projectId={projectData.id}
             trigger={
-              <button className="flex items-center gap-2 bg-zinc-50 text-zinc-950 px-4 py-2 rounded-md font-medium text-sm hover:bg-zinc-200 transition-colors">
+              <button 
+                className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                  isProjectAdmin 
+                    ? 'bg-zinc-50 text-zinc-950 hover:bg-zinc-200' 
+                    : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                }`}
+                disabled={!isProjectAdmin}
+                title={!isProjectAdmin ? "Only project admins can create boards" : undefined}
+              >
                 <Plus className="w-4 h-4" />
                 New Board
               </button>
@@ -133,11 +141,19 @@ export default function BoardsPage() {
           <p className="text-zinc-400 text-sm mb-6 max-w-sm text-center">
             Create a board to start tracking tasks and collaborating with your team.
           </p>
-          {isProjectAdmin && projectData && (
+          {projectData && (
             <CreateBoardModal 
               projectId={projectData.id}
               trigger={
-                <button className="flex items-center gap-2 bg-zinc-50 text-zinc-950 px-4 py-2 rounded-md font-medium text-sm hover:bg-zinc-200 transition-colors">
+                <button 
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                    isProjectAdmin 
+                      ? 'bg-zinc-50 text-zinc-950 hover:bg-zinc-200' 
+                      : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                  }`}
+                  disabled={!isProjectAdmin}
+                  title={!isProjectAdmin ? "Only project admins can create boards" : undefined}
+                >
                   <Plus className="w-4 h-4" />
                   Create your first board
                 </button>
