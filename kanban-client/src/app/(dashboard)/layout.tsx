@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Layout as LayoutIcon, LogOut, Loader2 } from 'lucide-react';
+import { Layout as LayoutIcon, LogOut, Loader2, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { isAuthenticated, clearTokens, getRefreshToken } from '@/lib/auth';
