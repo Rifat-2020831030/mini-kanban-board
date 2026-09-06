@@ -57,6 +57,21 @@ export async function getMyProject(req: Request, res: Response, next: NextFuncti
   }
 }
 
+export async function listMyProjects(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.userId;
+    const members = await prisma.projectMember.findMany({
+      where: { user_id: userId },
+      include: { project: true },
+    });
+
+    const projects = members.map(m => m.project);
+    res.json(projects);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export const updateProjectSchema = z.object({
   body: z.object({
     name: z.string().min(1).max(255).optional(),
@@ -66,7 +81,7 @@ export const updateProjectSchema = z.object({
 
 export async function updateProject(req: Request, res: Response, next: NextFunction) {
   try {
-    const projectId = req.params.projectId;
+    const projectId = req.params.projectId as string;
     const { name, description } = req.body;
 
     const project = await prisma.project.update({

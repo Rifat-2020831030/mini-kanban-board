@@ -9,6 +9,8 @@ import { api } from '@/lib/api';
 import { isAuthenticated, clearTokens, getRefreshToken } from '@/lib/auth';
 import { User } from '@/types/api';
 
+import { SidebarTree } from '@/components/sidebar/SidebarTree';
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -48,22 +50,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-full bg-[#09090b]">
       {/* Sidebar */}
-      <aside className="w-56 bg-zinc-900 border-r border-zinc-800 flex flex-col shrink-0">
+      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col shrink-0">
         <div className="h-14 flex items-center px-4 border-b border-zinc-800">
           <div className="flex items-center gap-2">
-            <LayoutIcon className="w-5 h-5 text-zinc-50" />
-            <span className="text-zinc-50 font-semibold">Kanban</span>
+            <LayoutIcon className="w-5 h-5 text-indigo-400" />
+            <span className="text-zinc-50 font-semibold tracking-wide">Kanban</span>
           </div>
         </div>
 
-        <nav className="flex-1 p-2">
-          <Link
-            href="/boards"
-            className="flex items-center gap-2 px-2 py-1.5 rounded-md text-zinc-50 bg-zinc-800 hover:bg-zinc-700 transition-colors"
-          >
-            <LayoutIcon className="w-4 h-4 text-zinc-400" />
-            <span className="text-sm font-medium">Boards</span>
-          </Link>
+        <nav className="flex-1 p-3 overflow-y-auto custom-scrollbar">
+          <SidebarTree userId={user?.id || null} />
         </nav>
 
         <div className="p-4 border-t border-zinc-800">
