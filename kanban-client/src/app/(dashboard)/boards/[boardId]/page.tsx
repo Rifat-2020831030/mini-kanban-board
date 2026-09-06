@@ -8,9 +8,14 @@ import { BoardView } from '@/components/board/BoardView';
 import { Loader2 } from 'lucide-react';
 import { Project } from '@/types/api';
 
+import { useSearchParams } from 'next/navigation';
+import { TaskModal } from '@/components/task/TaskModal';
+
 export default function BoardPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const boardId = params.boardId as string;
+  const taskId = searchParams.get('taskId');
 
   // 1. Get current user
   const { data: user } = useQuery({
@@ -71,10 +76,20 @@ export default function BoardPage() {
   }
 
   return (
-    <BoardView 
-      projectId={project!.id} 
-      board={boardData.board} 
-      isAdmin={boardData.isAdmin} 
-    />
+    <>
+      <BoardView 
+        projectId={project!.id} 
+        board={boardData.board} 
+        isAdmin={boardData.isAdmin} 
+      />
+      {taskId && (
+        <TaskModal 
+          projectId={project!.id}
+          boardId={boardId}
+          taskId={taskId}
+          myRole={boardData.myRole}
+        />
+      )}
+    </>
   );
 }
