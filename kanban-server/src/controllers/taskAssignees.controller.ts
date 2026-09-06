@@ -10,21 +10,39 @@ export const addAssigneeSchema = z.object({
 
 export async function addAssignee(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId;
+    const taskId = req.params.taskId as string;
     const { userId } = req.body;
     const assignedBy = req.user!.userId;
-    
-    // Validate target user is in project or board
     const task = (req as any).task;
-    const isMember = task.board.board_members.some((bm: any) => bm.user_id === userId);
-    const isProjectMember = task.board.project.project_members.some((pm: any) => pm.user_id === userId);
 
-    if (!isMember && !isProjectMember) {
+    const boardId = task?.board_id || task?.board?.id;
+    const projectId = task?.project_id || task?.board?.project_id;
+
+    // Check if target user is member of board or project
+    const [boardMember, projectMember] = await Promise.all([
+      boardId ? prisma.boardMember.findUnique({
+        where: { board_id_user_id: { board_id: boardId, user_id: userId } }
+      }) : null,
+      projectId ? prisma.projectMember.findUnique({
+        where: { project_id_user_id: { project_id: projectId, user_id: userId } }
+      }) : null
+    ]);
+
+    if (!boardMember && !projectMember) {
       return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Target user is not a project member' } });
     }
 
+    const existingAssignee = await prisma.taskAssignee.findUnique({
+      where: { task_id_user_id: { task_id: taskId, user_id: userId } }
+    });
+
+    if (existingAssignee) {
+      return res.status(409).json({ error: { code: 'ALREADY_ASSIGNED', message: 'User is already assigned to this task' } });
+    }
+
     const assignee = await prisma.taskAssignee.create({
-      data: { task_id: taskId as string, user_id: userId as string, assigned_by: assignedBy as string },
+      data: { task_id: taskId, user_id: userId, assigned_by: assignedBy },
+      include: { user: { select: { id: true, username: true, email: true } } }
     });
 
     res.status(201).json(assignee);

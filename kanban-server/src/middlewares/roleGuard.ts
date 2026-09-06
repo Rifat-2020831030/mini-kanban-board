@@ -91,24 +91,32 @@ const roleLevels: Record<BoardRole, number> = {
 export function requireBoardRole(minRole: BoardRole) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.userId;
-    const boardId = req.params.boardId || req.body.boardId;
+    const boardId = (req.params.boardId || req.body.boardId) as string;
 
     if (!userId || !boardId) {
       return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Missing user or board ID' } });
     }
 
-    const member = await prisma.boardMember.findUnique({
-      where: { board_id_user_id: { board_id: boardId, user_id: userId } },
+    const board = await prisma.board.findUnique({
+      where: { id: boardId },
+      include: {
+        board_members: { where: { user_id: userId } },
+        project: { include: { project_members: { where: { user_id: userId } } } }
+      }
     });
 
-    // We might also allow project admins here, but usually role checks are specific to board members.
-    // If we want project admin to bypass board roles:
-    const projectAdmin = await prisma.board.findUnique({
-      where: { id: boardId },
-      include: { project: { include: { project_members: { where: { user_id: userId, role: 'ADMIN' } } } } }
-    }).then(b => b?.project.project_members.length ? true : false);
+    if (!board) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Board not found' } });
+    }
 
-    if (projectAdmin) {
+    const isProjectAdmin = board.project.project_members.some(pm => pm.role === 'ADMIN');
+    const member = board.board_members[0];
+
+    (req as any).board = board;
+    (req as any).isProjectAdmin = isProjectAdmin;
+
+    if (isProjectAdmin) {
+      (req as any).boardRole = 'OWNER';
       return next();
     }
 
@@ -120,6 +128,7 @@ export function requireBoardRole(minRole: BoardRole) {
       return res.status(403).json({ error: { code: 'FORBIDDEN', message: `Require at least ${minRole} role` } });
     }
 
+    (req as any).boardRole = member.role;
     (req as any).boardMember = member;
     next();
   };

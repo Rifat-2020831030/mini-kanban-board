@@ -5,6 +5,9 @@ import { BoardData } from '@/hooks/useBoardData';
 import { BoardMembersModal } from './BoardMembersModal';
 import { BoardMember, ProjectMember } from '@/types/api';
 
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+
 interface BoardHeaderProps {
   board: BoardData;
   isAdmin: boolean;
@@ -15,8 +18,10 @@ interface BoardHeaderProps {
 const getRoleColor = (role: string) => {
   switch (role) {
     case 'ADMIN':
+    case 'OWNER':
       return 'bg-red-500/20 text-red-400 border-[#09090b]';
     case 'MEMBER':
+    case 'EDITOR':
       return 'bg-blue-500/20 text-blue-400 border-[#09090b]';
     case 'VIEWER':
       return 'bg-emerald-500/20 text-emerald-400 border-[#09090b]';
@@ -27,7 +32,20 @@ const getRoleColor = (role: string) => {
 
 export function BoardHeader({ board, isAdmin, searchQuery, onSearchChange }: BoardHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const members: BoardMember[] = board.board_members || (board as any).members || [];
+
+  const { data: projectMembers } = useQuery({
+    queryKey: ['project-members', board.project_id],
+    queryFn: async () => {
+      const res = await api.get(`/projects/${board.project_id}/members`);
+      return res.data;
+    },
+    enabled: !!board.project_id,
+  });
+
+  const members: any[] = (projectMembers && projectMembers.length > 0)
+    ? projectMembers
+    : (board.board_members || (board as any).members || []);
+
   const displayMembers = members.slice(0, 5);
   const excess = members.length - 5;
 
@@ -82,7 +100,7 @@ export function BoardHeader({ board, isAdmin, searchQuery, onSearchChange }: Boa
                 <Link
                   href={`/settings?boardId=${board.id}`}
                   className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-50 transition-colors"
-                  title="Project Settings"
+                  title="Board Settings"
                 >
                   <Settings className="w-4 h-4" />
                 </Link>

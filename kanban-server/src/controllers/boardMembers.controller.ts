@@ -5,7 +5,7 @@ import { io } from '../socket';
 
 export async function listBoardMembers(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId;
+    const boardId = req.params.boardId as string;
     const members = await prisma.boardMember.findMany({
       where: { board_id: boardId },
       include: { user: { select: { id: true, username: true, email: true } } },
@@ -19,16 +19,24 @@ export async function listBoardMembers(req: Request, res: Response, next: NextFu
 export const addBoardMemberSchema = z.object({
   body: z.object({
     userId: z.string().uuid(),
-    role: z.enum(['EDITOR', 'MEMBER']),
+    role: z.enum(['OWNER', 'EDITOR', 'MEMBER']),
     jobTitle: z.string().optional(),
   }),
 });
 
 export async function addBoardMember(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId;
+    const boardId = req.params.boardId as string;
     const { userId, role, jobTitle } = req.body;
-    const board = (req as any).board; // from requireBoardAccess
+    let board = (req as any).board;
+
+    if (!board) {
+      board = await prisma.board.findUnique({ where: { id: boardId } });
+    }
+
+    if (!board) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Board not found' } });
+    }
 
     const projectMember = await prisma.projectMember.findUnique({
       where: { project_id_user_id: { project_id: board.project_id, user_id: userId } },
@@ -59,7 +67,7 @@ export const updateBoardMemberSchema = z.object({
 
 export async function updateBoardMember(req: Request, res: Response, next: NextFunction) {
   try {
-    const memberId = req.params.memberId;
+    const memberId = req.params.memberId as string;
     const { role, jobTitle } = req.body;
 
     const member = await prisma.boardMember.update({
@@ -77,7 +85,7 @@ export async function updateBoardMember(req: Request, res: Response, next: NextF
 
 export async function removeBoardMember(req: Request, res: Response, next: NextFunction) {
   try {
-    const memberId = req.params.memberId;
+    const memberId = req.params.memberId as string;
     const isProjectAdmin = (req as any).isProjectAdmin;
 
     const member = await prisma.boardMember.findUnique({ where: { id: memberId } });
