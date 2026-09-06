@@ -112,6 +112,7 @@ export async function getBoardById(req: Request, res: Response, next: NextFuncti
               include: {
                 labels: { include: { label: true } },
                 assignees: { include: { user: { select: { id: true, username: true, email: true } } } },
+                subtasks: { orderBy: { position: 'asc' } },
               }
             }
           }

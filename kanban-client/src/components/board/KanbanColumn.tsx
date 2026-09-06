@@ -6,16 +6,17 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { TaskCard } from './TaskCard';
 import { ColumnHeader } from './ColumnHeader';
 import { AddTaskForm } from './AddTaskForm';
-import { Column, Task } from '@/types/api';
+import { Column, Task, BoardMember } from '@/types/api';
 
 interface KanbanColumnProps {
   projectId: string;
   boardId: string;
   column: Column & { tasks: Task[] };
   isAdmin: boolean;
+  boardMembers?: BoardMember[];
 }
 
-export function KanbanColumn({ projectId, boardId, column, isAdmin }: KanbanColumnProps) {
+export function KanbanColumn({ projectId, boardId, column, isAdmin, boardMembers }: KanbanColumnProps) {
   const {
     attributes,
     listeners,
@@ -82,6 +83,7 @@ export function KanbanColumn({ projectId, boardId, column, isAdmin }: KanbanColu
           projectId={projectId}
           boardId={boardId}
           columnId={column.id}
+          boardMembers={boardMembers}
         />
       </div>
     </div>

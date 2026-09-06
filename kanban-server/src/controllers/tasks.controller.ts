@@ -13,13 +13,15 @@ export const createTaskSchema = z.object({
     description: z.string().nullable().optional(),
     dueDate: z.string().nullable().optional(),
     priority: z.enum(['NONE', 'LOW', 'MEDIUM', 'HIGH']).optional(),
+    assigneeIds: z.array(z.string().uuid()).optional(),
+    labelIds: z.array(z.string().uuid()).optional(),
   }),
 });
 
 export async function createTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId;
-    const { columnId, title, description, dueDate, priority } = req.body;
+    const boardId = req.params.boardId as string;
+    const { columnId, title, description, dueDate, priority, assigneeIds, labelIds } = req.body;
     const userId = req.user!.userId;
     const boardRole = (req as any).boardRole;
     const board = (req as any).board;
@@ -50,17 +52,38 @@ export async function createTask(req: Request, res: Response, next: NextFunction
         },
       });
 
-      if (boardRole === 'MEMBER') {
+      if (assigneeIds && assigneeIds.length > 0) {
+        for (const aId of assigneeIds) {
+          await tx.taskAssignee.create({
+            data: { task_id: t.id, user_id: aId, assigned_by: userId },
+          });
+        }
+      } else if (boardRole === 'MEMBER') {
         await tx.taskAssignee.create({
           data: { task_id: t.id, user_id: userId, assigned_by: userId },
         });
+      }
+
+      if (labelIds && labelIds.length > 0) {
+        for (const lId of labelIds) {
+          await tx.taskLabel.create({
+            data: { task_id: t.id, label_id: lId },
+          });
+        }
       }
 
       await tx.taskLifecycleEvent.create({
         data: { task_id: t.id, user_id: userId, action_type: 'CREATED', to_column_id: columnId },
       });
 
-      return t;
+      return tx.task.findUnique({
+        where: { id: t.id },
+        include: {
+          subtasks: { orderBy: { position: 'asc' } },
+          labels: { include: { label: true } },
+          assignees: { include: { user: { select: { id: true, username: true, email: true } } } },
+        }
+      });
     });
 
     io.to(`board:${boardId}`).emit('task:created', task);
@@ -72,7 +95,18 @@ export async function createTask(req: Request, res: Response, next: NextFunction
 
 export async function getTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const task = (req as any).task; // populated by requireTaskAccess
+    const taskId = req.params.taskId as string;
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: {
+        subtasks: { orderBy: { position: 'asc' } },
+        labels: { include: { label: true } },
+        assignees: { include: { user: { select: { id: true, username: true, email: true } } } },
+      }
+    });
+    if (!task) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Task not found' } });
+    }
     res.json(task);
   } catch (err) {
     next(err);

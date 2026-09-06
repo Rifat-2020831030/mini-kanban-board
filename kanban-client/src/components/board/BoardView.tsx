@@ -238,6 +238,7 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
                   boardId={board.id}
                   column={column}
                   isAdmin={isAdmin}
+                  boardMembers={board.board_members || (board as any).members || []}
                 />
               ))}
             </SortableContext>

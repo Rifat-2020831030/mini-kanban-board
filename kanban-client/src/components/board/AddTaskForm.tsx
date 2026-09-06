@@ -4,16 +4,20 @@ import { useState, useRef, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useCreateTask } from '@/hooks/useCreateTask';
 
+import { BoardMember } from '@/types/api';
+
 interface AddTaskFormProps {
   projectId: string;
   boardId: string;
   columnId: string;
+  boardMembers?: BoardMember[];
 }
 
-export function AddTaskForm({ projectId, boardId, columnId }: AddTaskFormProps) {
+export function AddTaskForm({ projectId, boardId, columnId, boardMembers }: AddTaskFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<'NONE' | 'LOW' | 'MEDIUM' | 'HIGH'>('NONE');
+  const [assigneeId, setAssigneeId] = useState<string>('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const createTask = useCreateTask();
@@ -34,11 +38,19 @@ export function AddTaskForm({ projectId, boardId, columnId }: AddTaskFormProps) 
     
     isSubmitting.current = true;
     createTask.mutate(
-      { projectId, boardId, columnId, title: title.trim(), priority },
+      { 
+        projectId, 
+        boardId, 
+        columnId, 
+        title: title.trim(), 
+        priority, 
+        assigneeIds: assigneeId ? [assigneeId] : [] 
+      },
       {
         onSuccess: () => {
           setTitle('');
           setPriority('NONE');
+          setAssigneeId('');
           setIsEditing(false);
           isSubmitting.current = false;
         },
@@ -56,6 +68,7 @@ export function AddTaskForm({ projectId, boardId, columnId }: AddTaskFormProps) 
     } else if (e.key === 'Escape') {
       setTitle('');
       setPriority('NONE');
+      setAssigneeId('');
       setIsEditing(false);
     }
   };
@@ -73,21 +86,38 @@ export function AddTaskForm({ projectId, boardId, columnId }: AddTaskFormProps) 
           rows={2}
           disabled={createTask.isPending}
         />
-        <div className="flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2">
-          <select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value as any)}
-            className="bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 outline-none"
-          >
-            <option value="NONE">Priority: None</option>
-            <option value="LOW">Priority: Low</option>
-            <option value="MEDIUM">Priority: Medium</option>
-            <option value="HIGH">Priority: High</option>
-          </select>
-
+        <div className="flex flex-col gap-2 border-t border-zinc-800/60 pt-2">
           <div className="flex items-center gap-2">
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as any)}
+              className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 outline-none"
+            >
+              <option value="NONE">Priority: None</option>
+              <option value="LOW">Priority: Low</option>
+              <option value="MEDIUM">Priority: Medium</option>
+              <option value="HIGH">Priority: High</option>
+            </select>
+
+            {boardMembers && boardMembers.length > 0 && (
+              <select
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+                className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 outline-none truncate"
+              >
+                <option value="">Assignee: None</option>
+                {boardMembers.map((bm) => (
+                  <option key={bm.user_id} value={bm.user_id}>
+                    Assignee: {bm.user?.username || 'User'}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div className="flex items-center justify-end gap-2">
             <button
-              onClick={() => { setTitle(''); setPriority('NONE'); setIsEditing(false); }}
+              onClick={() => { setTitle(''); setPriority('NONE'); setAssigneeId(''); setIsEditing(false); }}
               type="button"
               className="px-2 py-1 text-zinc-400 text-xs hover:text-zinc-50"
             >
