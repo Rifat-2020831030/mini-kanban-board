@@ -11,7 +11,7 @@ interface BoardHeaderProps {
 
 export function BoardHeader({ board, searchQuery, onSearchChange }: BoardHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const members = board.members || [];
+  const members = board.board_members || [];
   const displayMembers = members.slice(0, 5);
   const excess = members.length - 5;
 
