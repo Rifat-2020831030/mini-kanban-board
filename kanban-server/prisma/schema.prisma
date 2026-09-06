@@ -7,102 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id             String                @id @default(uuid()) @db.Uuid
-  username       String                @unique
-  email          String                @unique
-  password_hash  String
-  refresh_tokens RefreshToken[]
-  projects       Project[]             @relation("ProjectCreatedBy")
-  project_members ProjectMember[]
-  board_members  BoardMember[]
-  task_assignees TaskAssignee[]
-  task_lifecycle_events TaskLifecycleEvent[]
-}
-
-model RefreshToken {
-  id          String   @id @default(uuid()) @db.Uuid
-  user_id     String   @db.Uuid
-  user        User     @relation(fields: [user_id], references: [id])
-  token_hash  String
-  expires_at  DateTime
-}
-
-model Project {
-  id            String          @id @default(uuid()) @db.Uuid
-  name          String
-  description   String?
-  created_by    String          @db.Uuid
-  creator       User            @relation("ProjectCreatedBy", fields: [created_by], references: [id])
-  is_archived   Boolean         @default(false)
-  members       ProjectMember[]
-  boards        Board[]
-  tasks         Task[]
-}
-
 enum ProjectRole {
   ADMIN
   MEMBER
 }
 
-model ProjectMember {
-  id         String      @id @default(uuid()) @db.Uuid
-  project_id String      @db.Uuid
-  project    Project     @relation(fields: [project_id], references: [id])
-  user_id    String      @db.Uuid
-  user       User        @relation(fields: [user_id], references: [id])
-  role       ProjectRole
-}
-
-model Board {
-  id            String         @id @default(uuid()) @db.Uuid
-  project_id    String         @db.Uuid
-  project       Project        @relation(fields: [project_id], references: [id])
-  name          String
-  description   String?
-  created_by    String         @db.Uuid
-  deleted_at    DateTime?
-  members       BoardMember[]
-  columns       Column[]
-  labels        Label[]
-  tasks         Task[]
-}
-
 enum BoardRole {
   OWNER
   EDITOR
-  VIEWER
-}
-
-model BoardMember {
-  id         String    @id @default(uuid()) @db.Uuid
-  board_id   String    @db.Uuid
-  board      Board     @relation(fields: [board_id], references: [id])
-  user_id    String    @db.Uuid
-  user       User      @relation(fields: [user_id], references: [id])
-  role       BoardRole
-  job_title  String?
-}
-
-model Column {
-  id                    String                @id @default(uuid()) @db.Uuid
-  board_id              String                @db.Uuid
-  board                 Board                 @relation(fields: [board_id], references: [id])
-  name                  String
-  position              Decimal               @db.Decimal(65, 30)
-  deleted_at            DateTime?
-  tasks                 Task[]
-  lifecycle_events_from TaskLifecycleEvent[]  @relation("FromColumn")
-  lifecycle_events_to   TaskLifecycleEvent[]  @relation("ToColumn")
-}
-
-model Label {
-  id         String       @id @default(uuid()) @db.Uuid
-  board_id   String       @db.Uuid
-  board      Board        @relation(fields: [board_id], references: [id])
-  name       String
-  color      String
-  tasks      TaskLabel[]
+  MEMBER
 }
 
 enum Priority {
@@ -112,21 +25,117 @@ enum Priority {
   HIGH
 }
 
+model User {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username            String               @unique @db.VarChar(255)
+  email               String               @unique @db.VarChar(255)
+  password_hash       String               @db.VarChar(255)
+  refresh_tokens      RefreshToken[]
+  created_projects    Project[]            @relation("ProjectCreator")
+  project_members     ProjectMember[]
+  created_boards      Board[]              @relation("BoardCreator")
+  board_members       BoardMember[]
+  created_tasks       Task[]               @relation("TaskCreator")
+  assigned_tasks      TaskAssignee[]       @relation("TaskAssigneeUser")
+  assigned_others     TaskAssignee[]       @relation("TaskAssigneeAssigner")
+  lifecycle_events    TaskLifecycleEvent[]
+}
+
+model RefreshToken {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  token_hash String   @db.VarChar(255)
+  expires_at DateTime @db.Timestamptz
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String          @db.VarChar(255)
+  description     String?         @db.Text
+  created_by      String          @db.Uuid
+  is_archived     Boolean         @default(false)
+  creator         User            @relation("ProjectCreator", fields: [created_by], references: [id])
+  project_members ProjectMember[]
+  boards          Board[]
+  tasks           Task[]
+}
+
+model ProjectMember {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id String      @db.Uuid
+  user_id    String      @db.Uuid
+  role       ProjectRole
+  project    Project     @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, user_id])
+}
+
+model Board {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id    String        @db.Uuid
+  name          String        @db.VarChar(255)
+  description   String?       @db.Text
+  created_by    String        @db.Uuid
+  deleted_at    DateTime?     @db.Timestamptz
+  project       Project       @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  creator       User          @relation("BoardCreator", fields: [created_by], references: [id])
+  board_members BoardMember[]
+  columns       Column[]
+  labels        Label[]
+  tasks         Task[]
+}
+
+model BoardMember {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  board_id   String    @db.Uuid
+  user_id    String    @db.Uuid
+  role       BoardRole
+  job_title  String?   @db.VarChar(255)
+  board      Board     @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([board_id, user_id])
+}
+
+model Column {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  board_id            String               @db.Uuid
+  name                String               @db.VarChar(255)
+  position            Decimal              @db.Decimal(65, 30)
+  deleted_at          DateTime?            @db.Timestamptz
+  board               Board                @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  tasks               Task[]
+  events_from_column  TaskLifecycleEvent[] @relation("FromColumn")
+  events_to_column    TaskLifecycleEvent[] @relation("ToColumn")
+}
+
+model Label {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  board_id    String       @db.Uuid
+  name        String       @db.VarChar(255)
+  color       String       @db.VarChar(50)
+  board       Board        @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  task_labels TaskLabel[]
+}
+
 model Task {
-  id               String               @id @default(uuid()) @db.Uuid
+  id               String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   column_id        String               @db.Uuid
-  column           Column               @relation(fields: [column_id], references: [id])
   board_id         String               @db.Uuid
-  board            Board                @relation(fields: [board_id], references: [id])
   project_id       String               @db.Uuid
-  project          Project              @relation(fields: [project_id], references: [id])
   created_by       String               @db.Uuid
-  title            String
-  description      String?
-  due_date         DateTime?
+  title            String               @db.VarChar(255)
+  description      String?              @db.Text
+  due_date         DateTime?            @db.Timestamptz
   priority         Priority             @default(NONE)
   position         Decimal              @db.Decimal(65, 30)
-  deleted_at       DateTime?
+  deleted_at       DateTime?            @db.Timestamptz
+  column           Column               @relation(fields: [column_id], references: [id])
+  board            Board                @relation(fields: [board_id], references: [id])
+  project          Project              @relation(fields: [project_id], references: [id])
+  creator          User                 @relation("TaskCreator", fields: [created_by], references: [id])
   assignees        TaskAssignee[]
   labels           TaskLabel[]
   subtasks         Subtask[]
@@ -134,45 +143,46 @@ model Task {
 }
 
 model TaskAssignee {
-  task_id      String  @db.Uuid
-  task         Task    @relation(fields: [task_id], references: [id])
-  user_id      String  @db.Uuid
-  user         User    @relation(fields: [user_id], references: [id])
-  assigned_by  String  @db.Uuid
+  task_id     String @db.Uuid
+  user_id     String @db.Uuid
+  assigned_by String @db.Uuid
+  task        Task   @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  user        User   @relation("TaskAssigneeUser", fields: [user_id], references: [id], onDelete: Cascade)
+  assigner    User   @relation("TaskAssigneeAssigner", fields: [assigned_by], references: [id], onDelete: Cascade)
 
   @@id([task_id, user_id])
 }
 
 model TaskLabel {
-  task_id   String  @db.Uuid
-  task      Task    @relation(fields: [task_id], references: [id])
-  label_id  String  @db.Uuid
-  label     Label   @relation(fields: [label_id], references: [id])
+  task_id  String @db.Uuid
+  label_id String @db.Uuid
+  task     Task   @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  label    Label  @relation(fields: [label_id], references: [id], onDelete: Cascade)
 
   @@id([task_id, label_id])
 }
 
 model Subtask {
-  id           String   @id @default(uuid()) @db.Uuid
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   task_id      String   @db.Uuid
-  task         Task     @relation(fields: [task_id], references: [id])
-  title        String
+  title        String   @db.VarChar(255)
   is_completed Boolean  @default(false)
   position     Decimal  @db.Decimal(65, 30)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at   DateTime @default(now()) @db.Timestamptz
+  updated_at   DateTime @updatedAt @db.Timestamptz
+  task         Task     @relation(fields: [task_id], references: [id], onDelete: Cascade)
 }
 
 model TaskLifecycleEvent {
-  id             String    @id @default(uuid()) @db.Uuid
-  task_id        String    @db.Uuid
-  task           Task      @relation(fields: [task_id], references: [id])
-  user_id        String    @db.Uuid
-  user           User      @relation(fields: [user_id], references: [id])
-  action_type    String
-  from_column_id String?   @db.Uuid
-  from_column    Column?   @relation("FromColumn", fields: [from_column_id], references: [id])
-  to_column_id   String?   @db.Uuid
-  to_column      Column?   @relation("ToColumn", fields: [to_column_id], references: [id])
-  created_at     DateTime  @default(now())
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  task_id        String   @db.Uuid
+  user_id        String   @db.Uuid
+  action_type    String   @db.VarChar(50)
+  from_column_id String?  @db.Uuid
+  to_column_id   String?  @db.Uuid
+  created_at     DateTime @default(now()) @db.Timestamptz
+  task           Task     @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [user_id], references: [id])
+  from_column    Column?  @relation("FromColumn", fields: [from_column_id], references: [id])
+  to_column      Column?  @relation("ToColumn", fields: [to_column_id], references: [id])
 }

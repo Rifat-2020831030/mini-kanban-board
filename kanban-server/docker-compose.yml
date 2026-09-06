@@ -1,17 +1,15 @@
-version: '3.8'
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: kanban_postgres
+  db:
+    image: postgres:16
+    restart: always
     environment:
-      POSTGRES_USER: kanban_user
-      POSTGRES_PASSWORD: kanban_password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: kanban_db
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
+      - kanban_data:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+  kanban_data:
