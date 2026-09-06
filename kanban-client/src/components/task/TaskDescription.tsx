@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Task } from '@/types/api';
 import { AlignLeft } from 'lucide-react';
 
-export function TaskDescription({ task, updateTask, projectId, boardId }: { task: Task, updateTask: any, projectId: string, boardId: string }) {
+export function TaskDescription({ task, updateTask, projectId, boardId, isMember }: { task: Task, updateTask: any, projectId: string, boardId: string, isMember?: boolean }) {
   const [isEditing, setIsEditing] = useState(false);
   const [description, setDescription] = useState(task.description || '');
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -39,7 +39,7 @@ export function TaskDescription({ task, updateTask, projectId, boardId }: { task
         <h3>Description</h3>
       </div>
       
-      {isEditing ? (
+      {isEditing && !isMember ? (
         <div className="flex flex-col gap-2">
           <textarea
             ref={inputRef}
@@ -68,17 +68,19 @@ export function TaskDescription({ task, updateTask, projectId, boardId }: { task
         </div>
       ) : (
         <div 
-          onClick={() => setIsEditing(true)}
-          className={`text-sm rounded-md p-3 cursor-pointer transition-colors ${
+          onClick={() => !isMember && setIsEditing(true)}
+          className={`text-sm rounded-md p-3 transition-colors ${
+            !isMember ? 'cursor-pointer hover:bg-zinc-800/50' : 'cursor-default'
+          } ${
             task.description 
-              ? 'text-zinc-300 hover:bg-zinc-800/50' 
-              : 'text-zinc-500 bg-zinc-800/30 hover:bg-zinc-800/60'
+              ? 'text-zinc-300' 
+              : 'text-zinc-500 bg-zinc-800/30'
           }`}
         >
           {task.description ? (
             <div className="whitespace-pre-wrap">{task.description}</div>
           ) : (
-            'Add a more detailed description...'
+            isMember ? 'No description provided.' : 'Add a more detailed description...'
           )}
         </div>
       )}

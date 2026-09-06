@@ -30,6 +30,9 @@ import { useSocket } from '@/providers/SocketProvider';
 import { useBoardSocket } from '@/hooks/useBoardSocket';
 import { useEffect } from 'react';
 
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+
 interface BoardViewProps {
   projectId: string;
   board: BoardData;
@@ -40,6 +43,17 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
   const [activeTask, setActiveTask] = useState<any>(null);
   const [activeColumn, setActiveColumn] = useState<any>(null);
   const [taskSearchQuery, setTaskSearchQuery] = useState('');
+
+  const { data: user } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const res = await api.get('/users/me');
+      return res.data.user;
+    }
+  });
+
+  const currentUserId = user?.id;
+  const myRole = (board as any).my_board_role || (isAdmin ? 'OWNER' : 'MEMBER');
 
   const filteredBoard = useMemo(() => {
     if (!taskSearchQuery) return board;
@@ -238,6 +252,8 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
                   boardId={board.id}
                   column={column}
                   isAdmin={isAdmin}
+                  myRole={myRole}
+                  currentUserId={currentUserId}
                   boardMembers={board.board_members || (board as any).members || []}
                 />
               ))}

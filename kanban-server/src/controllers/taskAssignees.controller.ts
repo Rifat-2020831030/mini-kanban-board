@@ -14,17 +14,17 @@ export async function addAssignee(req: Request, res: Response, next: NextFunctio
     const { userId } = req.body;
     const assignedBy = req.user!.userId;
     
-    // Validate target user is on the board
+    // Validate target user is in project or board
     const task = (req as any).task;
     const isMember = task.board.board_members.some((bm: any) => bm.user_id === userId);
-    const isProjectAdmin = task.board.project.project_members.some((pm: any) => pm.user_id === userId && pm.role === 'ADMIN');
+    const isProjectMember = task.board.project.project_members.some((pm: any) => pm.user_id === userId);
 
-    if (!isMember && !isProjectAdmin) {
-      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Target user is not a board member' } });
+    if (!isMember && !isProjectMember) {
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Target user is not a project member' } });
     }
 
     const assignee = await prisma.taskAssignee.create({
-      data: { task_id: taskId, user_id: userId, assigned_by: assignedBy },
+      data: { task_id: taskId as string, user_id: userId as string, assigned_by: assignedBy as string },
     });
 
     res.status(201).json(assignee);
@@ -35,8 +35,8 @@ export async function addAssignee(req: Request, res: Response, next: NextFunctio
 
 export async function removeAssignee(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId;
-    const userId = req.params.userId;
+    const taskId = req.params.taskId as string;
+    const userId = req.params.userId as string;
 
     await prisma.taskAssignee.delete({
       where: { task_id_user_id: { task_id: taskId, user_id: userId } },

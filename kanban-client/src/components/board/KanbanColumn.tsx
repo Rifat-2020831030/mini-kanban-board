@@ -13,10 +13,12 @@ interface KanbanColumnProps {
   boardId: string;
   column: Column & { tasks: Task[] };
   isAdmin: boolean;
+  myRole?: string;
+  currentUserId?: string;
   boardMembers?: BoardMember[];
 }
 
-export function KanbanColumn({ projectId, boardId, column, isAdmin, boardMembers }: KanbanColumnProps) {
+export function KanbanColumn({ projectId, boardId, column, isAdmin, myRole, currentUserId, boardMembers }: KanbanColumnProps) {
   const {
     attributes,
     listeners,
@@ -30,6 +32,7 @@ export function KanbanColumn({ projectId, boardId, column, isAdmin, boardMembers
       type: 'column',
       column,
     },
+    disabled: !isAdmin,
   });
 
   const style = {
@@ -58,7 +61,7 @@ export function KanbanColumn({ projectId, boardId, column, isAdmin, boardMembers
       <div 
         {...attributes}
         {...listeners}
-        className="cursor-grab hover:bg-zinc-900/30 rounded-t-md p-1 -m-1 mb-1 transition-colors"
+        className={`${isAdmin ? 'cursor-grab hover:bg-zinc-900/30' : ''} rounded-t-md p-1 -m-1 mb-1 transition-colors`}
       >
         <ColumnHeader 
           projectId={projectId}
@@ -74,7 +77,14 @@ export function KanbanColumn({ projectId, boardId, column, isAdmin, boardMembers
         <SortableContext items={tasksIds} strategy={verticalListSortingStrategy}>
           <div className="flex flex-col gap-2">
             {column.tasks.map(task => (
-              <TaskCard key={task.id} task={task} columnId={column.id} />
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                columnId={column.id} 
+                isAdmin={isAdmin} 
+                myRole={myRole} 
+                currentUserId={currentUserId} 
+              />
             ))}
           </div>
         </SortableContext>

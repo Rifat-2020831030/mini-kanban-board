@@ -125,7 +125,7 @@ export function requireBoardRole(minRole: BoardRole) {
   };
 }
 
-export function requireTaskAccess(action: 'edit' | 'move' | 'delete') {
+export function requireTaskAccess(action: 'view' | 'edit' | 'move' | 'delete') {
   return async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.userId;
     const taskId = (req.params.taskId || req.params.id) as string;
@@ -151,13 +151,16 @@ export function requireTaskAccess(action: 'edit' | 'move' | 'delete') {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Task not found' } });
     }
 
+    const isProjectMember = task.board.project.project_members.length > 0;
     const isProjectAdmin = task.board.project.project_members.some(pm => pm.role === 'ADMIN');
     const boardMember = task.board.board_members[0];
-    const role = boardMember?.role;
+    const role = boardMember?.role || (isProjectAdmin ? 'OWNER' : (isProjectMember ? 'MEMBER' : null));
     const isAssignee = task.assignees.length > 0;
 
     if (isProjectAdmin) {
       (req as any).task = task;
+      (req as any).boardRole = 'OWNER';
+      (req as any).isAssignee = isAssignee;
       return next();
     }
 
@@ -165,14 +168,18 @@ export function requireTaskAccess(action: 'edit' | 'move' | 'delete') {
       return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'No access to task' } });
     }
 
+    if (action === 'view') {
+      (req as any).task = task;
+      (req as any).boardRole = role;
+      (req as any).isAssignee = isAssignee;
+      return next();
+    }
+
     if (action === 'delete') {
       if (roleLevels[role] < roleLevels.EDITOR) {
         return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Only OWNER/EDITOR can delete tasks' } });
       }
     } else if (action === 'move') {
-      // EDITOR/OWNER can move. MEMBER can move if assignee? Or MEMBER can move any?
-      // "updateTask: if requester is a MEMBER role and is an assignee, allow all field updates EXCEPT title → 403 FORBIDDEN."
-      // Let's assume EDITOR+ can move, MEMBER can move if they are assignee.
       if (roleLevels[role] < roleLevels.EDITOR && !isAssignee) {
         return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Only EDITOR+ or Assignee can move tasks' } });
       }

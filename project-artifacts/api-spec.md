@@ -20,6 +20,49 @@ For the initial "mini" scope of this Kanban board, **there is no pagination** on
 
 ---
 
+## Role & Access Control Summary
+
+### Definitions
+| Role | Scope | Description |
+|---|---|---|
+| **Project Admin** | Project | Manages project members. Implicit OWNER on all boards. |
+| **Board OWNER** | Board | Has **Column-level permission**. Can manage columns, board members, and all tasks. |
+| **Board EDITOR** | Board | Has **Task-level permission**. Can create, edit, move, delete, and assign ANY task on the board. Cannot manage columns or board members. |
+| **Board MEMBER** | Board | Read-only access to all tasks. Can assign a task to **themselves**. Once assigned to a task, they gain permission to edit details, labels, subtasks, and move that specific task (but cannot edit the title or delete the task). |
+
+### Permission Matrix
+| Action | Project Admin / Board OWNER | Board EDITOR | Board MEMBER |
+|---|---|---|---|
+| **Board & Members** | | | |
+| Update board name/desc | ✅ | ❌ | ❌ |
+| Delete board | ✅ | ❌ | ❌ |
+| Add/Remove board member | ✅ | ❌ | ❌ |
+| Change member role | ✅ | ❌ | ❌ |
+| **Columns (Column-level permission)** | | | |
+| Create column | ✅ | ❌ | ❌ |
+| Rename column | ✅ | ❌ | ❌ |
+| Reorder column | ✅ | ❌ | ❌ |
+| Delete column | ✅ | ❌ | ❌ |
+| **Tasks (Task-level permission)** | | | |
+| Create task | ✅ | ✅ | ✅ (Auto-assigned) |
+| View task detail | ✅ | ✅ | ✅ |
+| Edit ANY task title | ✅ | ✅ | ❌ |
+| Edit ANY task details | ✅ | ✅ | ❌ |
+| Move ANY task | ✅ | ✅ | ❌ |
+| Delete ANY task | ✅ | ✅ | ❌ |
+| **Task Assignment & Member Powers** | | | |
+| Assign task to ANYONE | ✅ | ✅ | ❌ |
+| Assign task to SELF | ✅ | ✅ | ✅ |
+| Edit details of SELF-ASSIGNED task | ✅ | ✅ | ✅ |
+| Move SELF-ASSIGNED task | ✅ | ✅ | ✅ |
+| Edit title of SELF-ASSIGNED task | ✅ | ✅ | ❌ |
+| Delete SELF-ASSIGNED task | ✅ | ✅ | ❌ |
+| **Sub-tasks & Labels** | | | |
+| Manage labels | ✅ | ✅ | ❌ (Can only add to self-assigned tasks) |
+| Manage sub-tasks | ✅ | ✅ | ❌ (Can only manage on self-assigned tasks) |
+
+---
+
 ## 1. Authentication & Session Management
 
 ### POST `/api/auth/register` (Public)

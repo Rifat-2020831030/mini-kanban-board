@@ -9,12 +9,18 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 interface TaskCardProps {
   task: Task;
   columnId: string;
+  myRole?: string;
+  currentUserId?: string;
+  isAdmin?: boolean;
 }
 
-export function TaskCard({ task, columnId }: TaskCardProps) {
+export function TaskCard({ task, columnId, myRole, currentUserId, isAdmin }: TaskCardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const isAssignee = !!(task.assignees?.some((a: any) => (a.user_id || a.user?.id || a.id) === currentUserId));
+  const canMove = isAdmin || myRole === 'OWNER' || myRole === 'EDITOR' || isAssignee;
 
   const {
     attributes,
@@ -30,6 +36,7 @@ export function TaskCard({ task, columnId }: TaskCardProps) {
       task,
       columnId,
     },
+    disabled: !canMove,
   });
 
   const style = {
@@ -75,31 +82,9 @@ export function TaskCard({ task, columnId }: TaskCardProps) {
       {...attributes}
       {...listeners}
       onClick={handleCardClick}
-      className="bg-zinc-900 border border-zinc-800 rounded-md p-3 cursor-grab hover:bg-zinc-800 hover:border-zinc-700 group flex flex-col gap-2"
+      className={`bg-zinc-900 border border-zinc-800 rounded-md p-3 ${canMove ? 'cursor-grab hover:bg-zinc-800 hover:border-zinc-700' : 'cursor-pointer hover:bg-zinc-800/80'} group flex flex-col gap-2`}
     >
-      {/* Labels */}
-      {task.labels && task.labels.length > 0 && (
-        <div className="flex flex-wrap gap-1 items-center">
-          {task.labels.map((l: any, idx: number) => {
-            const label = l.label || l;
-            if (!label || !label.name) return null;
-            return (
-              <span
-                key={label.id || idx}
-                className="text-[10px] px-2 py-0.5 rounded-full font-medium shadow-sm flex items-center gap-1 border"
-                style={{
-                  backgroundColor: label.color ? `${label.color}25` : '#27272a',
-                  borderColor: label.color ? `${label.color}50` : '#3f3f46',
-                  color: label.color || '#f4f4f5',
-                }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: label.color || '#a1a1aa' }} />
-                {label.name}
-              </span>
-            );
-          })}
-        </div>
-      )}
+
 
       {/* Title */}
       <h4 className="text-zinc-50 text-sm font-medium line-clamp-2 leading-snug">

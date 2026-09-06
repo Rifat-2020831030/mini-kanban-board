@@ -9,8 +9,8 @@ export const tasksRoutes = Router({ mergeParams: true });
 tasksRoutes.use(authGuard);
 // These are typically mounted at /boards/:boardId/tasks
 tasksRoutes.post('/', requireBoardAccess(), validate(createTaskSchema), createTask);
-tasksRoutes.get('/:taskId', requireTaskAccess('edit'), getTask); // edit implies read
+tasksRoutes.get('/:taskId', requireTaskAccess('view'), getTask);
 tasksRoutes.patch('/:taskId', requireTaskAccess('edit'), validate(updateTaskSchema), updateTask);
 tasksRoutes.patch('/:taskId/move', requireTaskAccess('move'), validate(moveTaskSchema), moveTask);
 tasksRoutes.delete('/:taskId', requireTaskAccess('delete'), deleteTask);
-tasksRoutes.get('/:taskId/lifecycle', requireTaskAccess('edit'), getTaskLifecycle);
+tasksRoutes.get('/:taskId/lifecycle', requireTaskAccess('view'), getTaskLifecycle);

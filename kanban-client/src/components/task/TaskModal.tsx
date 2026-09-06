@@ -12,7 +12,7 @@ import { TaskLabels } from './TaskLabels';
 import { SubtaskList } from './SubtaskList';
 import { TaskLifecycle } from './TaskLifecycle';
 import { api } from '@/lib/api';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 interface TaskModalProps {
@@ -47,8 +47,20 @@ export function TaskModal({ projectId, boardId, taskId, myRole }: TaskModalProps
     }
   });
 
-  const isReadOnly = (myRole as string) === 'VIEWER';
-  const isMember = isReadOnly;
+  const { data: user } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const res = await api.get('/users/me');
+      return res.data.user;
+    }
+  });
+
+  const isOwnerOrEditor = myRole === 'OWNER' || myRole === 'EDITOR';
+  const isAssignee = !!(task?.assignees?.some((a: any) => (a.user_id || a.user?.id || a.id) === user?.id));
+
+  const canEditTask = isOwnerOrEditor || isAssignee;
+  const canDeleteTask = isOwnerOrEditor;
+  const canEditTitle = isOwnerOrEditor;
 
   const completedSubtasks = task?.subtasks?.filter((st: any) => st.is_completed).length || 0;
   const totalSubtasks = task?.subtasks?.length || 0;
@@ -86,7 +98,7 @@ export function TaskModal({ projectId, boardId, taskId, myRole }: TaskModalProps
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  {!isReadOnly && (
+                  {canDeleteTask && (
                     <button 
                       onClick={() => {
                         if (confirm('Are you sure you want to delete this task?')) {
@@ -108,19 +120,19 @@ export function TaskModal({ projectId, boardId, taskId, myRole }: TaskModalProps
               </div>
 
               <div className="flex-1 p-6 flex flex-col gap-8">
-                <TaskTitleEditor task={task} isMember={isReadOnly} updateTask={updateTask} projectId={projectId} boardId={boardId} />
+                <TaskTitleEditor task={task} isMember={!canEditTitle} updateTask={updateTask} projectId={projectId} boardId={boardId} />
                 
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="flex-1 flex flex-col gap-8">
-                    <TaskDescription task={task} updateTask={updateTask} projectId={projectId} boardId={boardId} />
-                    <SubtaskList task={task} boardId={boardId} projectId={projectId} isMember={isReadOnly} />
+                    <TaskDescription task={task} updateTask={updateTask} projectId={projectId} boardId={boardId} isMember={!canEditTask} />
+                    <SubtaskList task={task} boardId={boardId} projectId={projectId} isMember={!canEditTask} />
                     <TaskLifecycle taskId={taskId} boardId={boardId} projectId={projectId} />
                   </div>
                   
                   <div className="w-full md:w-56 shrink-0 flex flex-col gap-6">
-                    <TaskMetadata task={task} updateTask={updateTask} isMember={isReadOnly} />
-                    <TaskAssignees task={task} boardId={boardId} projectId={projectId} isMember={isReadOnly} />
-                    <TaskLabels task={task} boardId={boardId} projectId={projectId} isMember={isReadOnly} />
+                    <TaskMetadata task={task} updateTask={updateTask} isMember={!canEditTask} projectId={projectId} boardId={boardId} />
+                    <TaskAssignees task={task} boardId={boardId} projectId={projectId} isMember={!canEditTask} />
+                    <TaskLabels task={task} boardId={boardId} projectId={projectId} isMember={!canEditTask} />
                   </div>
                 </div>
               </div>
