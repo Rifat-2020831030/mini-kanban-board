@@ -76,7 +76,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-50 text-xs font-medium shrink-0">
-                  {user.username.substring(0, 2).toUpperCase()}
+                  {user.username?.substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-zinc-50 text-sm font-medium truncate">{user.username}</span>

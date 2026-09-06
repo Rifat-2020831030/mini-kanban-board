@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db';
 import { computePosition } from '../utils/fractionalIndex';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '@prisma/client';
 import { io } from '../socket';
 
 export const createColumnSchema = z.object({
