@@ -10,6 +10,7 @@ import { columnsRoutes } from './columns.routes';
 import { tasksRoutes } from './tasks.routes';
 import { taskAssigneesRoutes } from './taskAssignees.routes';
 import { labelsRoutes, taskLabelsRoutes } from './labels.routes';
+import { subtasksRoutes } from './subtasks.routes';
 
 export const routes = Router();
 
@@ -28,3 +29,4 @@ routes.use('/boards/:boardId/tasks', tasksRoutes);
 routes.use('/boards/:boardId/tasks/:taskId/assignees', taskAssigneesRoutes);
 routes.use('/boards/:boardId/labels', labelsRoutes);
 routes.use('/boards/:boardId/tasks/:taskId/labels', taskLabelsRoutes);
+routes.use('/boards/:boardId/tasks/:taskId/subtasks', subtasksRoutes);
