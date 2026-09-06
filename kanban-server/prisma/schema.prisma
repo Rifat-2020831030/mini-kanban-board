@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String                @id @default(uuid()) @db.Uuid
+  username       String                @unique
+  email          String                @unique
+  password_hash  String
+  refresh_tokens RefreshToken[]
+  projects       Project[]             @relation("ProjectCreatedBy")
+  project_members ProjectMember[]
+  board_members  BoardMember[]
+  task_assignees TaskAssignee[]
+  task_lifecycle_events TaskLifecycleEvent[]
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid()) @db.Uuid
+  user_id     String   @db.Uuid
+  user        User     @relation(fields: [user_id], references: [id])
+  token_hash  String
+  expires_at  DateTime
+}
+
+model Project {
+  id            String          @id @default(uuid()) @db.Uuid
+  name          String
+  description   String?
+  created_by    String          @db.Uuid
+  creator       User            @relation("ProjectCreatedBy", fields: [created_by], references: [id])
+  is_archived   Boolean         @default(false)
+  members       ProjectMember[]
+  boards        Board[]
+  tasks         Task[]
+}
+
+enum ProjectRole {
+  ADMIN
+  MEMBER
+}
+
+model ProjectMember {
+  id         String      @id @default(uuid()) @db.Uuid
+  project_id String      @db.Uuid
+  project    Project     @relation(fields: [project_id], references: [id])
+  user_id    String      @db.Uuid
+  user       User        @relation(fields: [user_id], references: [id])
+  role       ProjectRole
+}
+
+model Board {
+  id            String         @id @default(uuid()) @db.Uuid
+  project_id    String         @db.Uuid
+  project       Project        @relation(fields: [project_id], references: [id])
+  name          String
+  description   String?
+  created_by    String         @db.Uuid
+  deleted_at    DateTime?
+  members       BoardMember[]
+  columns       Column[]
+  labels        Label[]
+  tasks         Task[]
+}
+
+enum BoardRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model BoardMember {
+  id         String    @id @default(uuid()) @db.Uuid
+  board_id   String    @db.Uuid
+  board      Board     @relation(fields: [board_id], references: [id])
+  user_id    String    @db.Uuid
+  user       User      @relation(fields: [user_id], references: [id])
+  role       BoardRole
+  job_title  String?
+}
+
+model Column {
+  id                    String                @id @default(uuid()) @db.Uuid
+  board_id              String                @db.Uuid
+  board                 Board                 @relation(fields: [board_id], references: [id])
+  name                  String
+  position              Decimal               @db.Decimal(65, 30)
+  deleted_at            DateTime?
+  tasks                 Task[]
+  lifecycle_events_from TaskLifecycleEvent[]  @relation("FromColumn")
+  lifecycle_events_to   TaskLifecycleEvent[]  @relation("ToColumn")
+}
+
+model Label {
+  id         String       @id @default(uuid()) @db.Uuid
+  board_id   String       @db.Uuid
+  board      Board        @relation(fields: [board_id], references: [id])
+  name       String
+  color      String
+  tasks      TaskLabel[]
+}
+
+enum Priority {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Task {
+  id               String               @id @default(uuid()) @db.Uuid
+  column_id        String               @db.Uuid
+  column           Column               @relation(fields: [column_id], references: [id])
+  board_id         String               @db.Uuid
+  board            Board                @relation(fields: [board_id], references: [id])
+  project_id       String               @db.Uuid
+  project          Project              @relation(fields: [project_id], references: [id])
+  created_by       String               @db.Uuid
+  title            String
+  description      String?
+  due_date         DateTime?
+  priority         Priority             @default(NONE)
+  position         Decimal              @db.Decimal(65, 30)
+  deleted_at       DateTime?
+  assignees        TaskAssignee[]
+  labels           TaskLabel[]
+  subtasks         Subtask[]
+  lifecycle_events TaskLifecycleEvent[]
+}
+
+model TaskAssignee {
+  task_id      String  @db.Uuid
+  task         Task    @relation(fields: [task_id], references: [id])
+  user_id      String  @db.Uuid
+  user         User    @relation(fields: [user_id], references: [id])
+  assigned_by  String  @db.Uuid
+
+  @@id([task_id, user_id])
+}
+
+model TaskLabel {
+  task_id   String  @db.Uuid
+  task      Task    @relation(fields: [task_id], references: [id])
+  label_id  String  @db.Uuid
+  label     Label   @relation(fields: [label_id], references: [id])
+
+  @@id([task_id, label_id])
+}
+
+model Subtask {
+  id           String   @id @default(uuid()) @db.Uuid
+  task_id      String   @db.Uuid
+  task         Task     @relation(fields: [task_id], references: [id])
+  title        String
+  is_completed Boolean  @default(false)
+  position     Decimal  @db.Decimal(65, 30)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+}
+
+model TaskLifecycleEvent {
+  id             String    @id @default(uuid()) @db.Uuid
+  task_id        String    @db.Uuid
+  task           Task      @relation(fields: [task_id], references: [id])
+  user_id        String    @db.Uuid
+  user           User      @relation(fields: [user_id], references: [id])
+  action_type    String
+  from_column_id String?   @db.Uuid
+  from_column    Column?   @relation("FromColumn", fields: [from_column_id], references: [id])
+  to_column_id   String?   @db.Uuid
+  to_column      Column?   @relation("ToColumn", fields: [to_column_id], references: [id])
+  created_at     DateTime  @default(now())
+}
