@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db';
 import { computePosition } from '../utils/fractionalIndex';
-import { Decimal } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { io } from '../socket';
 
 export const createColumnSchema = z.object({
@@ -27,7 +27,7 @@ export async function createColumn(req: Request, res: Response, next: NextFuncti
       orderBy: { position: 'desc' },
     });
 
-    const position = lastCol ? lastCol.position.plus(1) : new Decimal(1);
+    const position = lastCol ? lastCol.position.plus(1) : new Prisma.Decimal(1);
 
     const column = await prisma.column.create({
       data: { board_id: boardId, name, position },
@@ -50,7 +50,7 @@ export async function bulkCreateColumns(req: Request, res: Response, next: NextF
       orderBy: { position: 'desc' },
     });
 
-    let currentPosition = lastCol ? lastCol.position : new Decimal(0);
+    let currentPosition = lastCol ? lastCol.position : new Prisma.Decimal(0);
 
     const columns = await prisma.$transaction(async (tx) => {
       const createdColumns = [];
@@ -107,28 +107,37 @@ export async function moveColumn(req: Request, res: Response, next: NextFunction
     const { afterColumnId } = req.body;
 
     let afterCol = null;
-    let beforeCol = null;
+    let nextCol = null;
 
     if (afterColumnId) {
-      afterCol = await prisma.column.findUnique({ where: { id: afterColumnId } });
+      afterCol = await prisma.column.findUnique({ where: { id: afterColumnId as string } });
       if (!afterCol || afterCol.board_id !== boardId) {
         return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid afterColumnId' } });
       }
-      beforeCol = await prisma.column.findFirst({
-        where: { board_id: boardId, id: { not: columnId }, position: { gt: afterCol.position }, deleted_at: null },
+      nextCol = await prisma.column.findFirst({
+        where: {
+          board_id: boardId as string,
+          position: { gt: afterCol.position },
+          deleted_at: null,
+          id: { not: columnId as string },
+        },
         orderBy: { position: 'asc' },
       });
     } else {
-      beforeCol = await prisma.column.findFirst({
-        where: { board_id: boardId, id: { not: columnId }, deleted_at: null },
+      nextCol = await prisma.column.findFirst({
+        where: {
+          board_id: boardId as string,
+          deleted_at: null,
+          id: { not: columnId as string },
+        },
         orderBy: { position: 'asc' },
       });
     }
 
-    const newPos = computePosition(beforeCol?.position || null, afterCol?.position || null);
+    const newPos = computePosition(afterCol?.position || null, nextCol?.position || null);
 
     const column = await prisma.column.update({
-      where: { id: columnId },
+      where: { id: columnId as string },
       data: { position: newPos },
     });
 

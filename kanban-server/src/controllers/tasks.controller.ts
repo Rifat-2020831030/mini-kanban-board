@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db';
 import { computePosition } from '../utils/fractionalIndex';
-import { Decimal } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { io } from '../socket';
 import { Priority } from '@prisma/client';
 
@@ -35,7 +35,7 @@ export async function createTask(req: Request, res: Response, next: NextFunction
       where: { column_id: columnId, deleted_at: null },
       orderBy: { position: 'desc' },
     });
-    const position = lastTask ? lastTask.position.plus(1) : new Decimal(1);
+    const position = lastTask ? lastTask.position.plus(1) : new Prisma.Decimal(1);
 
     const task = await prisma.$transaction(async (tx) => {
       const t = await tx.task.create({
@@ -172,29 +172,38 @@ export async function moveTask(req: Request, res: Response, next: NextFunction) 
     }
 
     let afterTask = null;
-    let beforeTask = null;
+    let nextTask = null;
 
     if (afterTaskId) {
       afterTask = await prisma.task.findUnique({ where: { id: afterTaskId } });
       if (!afterTask || afterTask.column_id !== toColumnId) {
         return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid afterTaskId' } });
       }
-      beforeTask = await prisma.task.findFirst({
-        where: { column_id: toColumnId, id: { not: taskId }, position: { gt: afterTask.position }, deleted_at: null },
+      nextTask = await prisma.task.findFirst({
+        where: {
+          column_id: toColumnId,
+          position: { gt: afterTask.position },
+          deleted_at: null,
+          id: { not: taskId as string },
+        },
         orderBy: { position: 'asc' },
       });
     } else {
-      beforeTask = await prisma.task.findFirst({
-        where: { column_id: toColumnId, id: { not: taskId }, deleted_at: null },
+      nextTask = await prisma.task.findFirst({
+        where: {
+          column_id: toColumnId,
+          deleted_at: null,
+          id: { not: taskId as string },
+        },
         orderBy: { position: 'asc' },
       });
     }
 
-    const newPos = computePosition(beforeTask?.position || null, afterTask?.position || null);
+    const newPos = computePosition(afterTask?.position || null, nextTask?.position || null);
 
     const task = await prisma.$transaction(async (tx) => {
       const t = await tx.task.update({
-        where: { id: taskId },
+        where: { id: taskId as string },
         data: { column_id: toColumnId, position: newPos },
       });
 

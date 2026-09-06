@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db';
 import { computePosition } from '../utils/fractionalIndex';
-import { Decimal } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { io } from '../socket';
 
 export const createSubtaskSchema = z.object({
@@ -21,7 +21,7 @@ export async function createSubtask(req: Request, res: Response, next: NextFunct
       orderBy: { position: 'desc' },
     });
 
-    const position = lastSubtask ? lastSubtask.position.plus(1) : new Decimal(1);
+    const position = lastSubtask ? lastSubtask.position.plus(1) : new Prisma.Decimal(1);
 
     const subtask = await prisma.subtask.create({
       data: { task_id: taskId, title, position },
@@ -62,12 +62,12 @@ export async function updateSubtask(req: Request, res: Response, next: NextFunct
           return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid afterSubtaskId' } });
         }
         beforeSub = await prisma.subtask.findFirst({
-          where: { task_id: taskId, id: { not: subtaskId }, position: { gt: afterSub.position } },
+          where: { task_id: taskId, position: { gt: afterSub.position } },
           orderBy: { position: 'asc' },
         });
       } else {
         beforeSub = await prisma.subtask.findFirst({
-          where: { task_id: taskId, id: { not: subtaskId } },
+          where: { task_id: taskId },
           orderBy: { position: 'asc' },
         });
       }

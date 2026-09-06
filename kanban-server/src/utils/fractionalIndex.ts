@@ -1,4 +1,4 @@
-import { Decimal } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 /**
  * Computes the fractional position between two elements.
@@ -9,21 +9,19 @@ import { Decimal } from '@prisma/client';
  * - If both are null, this is the first item (return 1)
  * - Otherwise, return (before + after) / 2
  */
-export function computePosition(before: Decimal | null, after: Decimal | null): Decimal {
+export function computePosition(before: Prisma.Decimal | null, after: Prisma.Decimal | null): Prisma.Decimal {
   if (before === null && after === null) {
-    return new Decimal(1);
+    return new Prisma.Decimal(1);
   }
   
   if (before === null && after !== null) {
-    // Target position is AFTER all items (moving to END)
-    return after.plus(1);
+    return after.dividedBy(2);
   }
   
   if (after === null && before !== null) {
-    // Target position is BEFORE all items (moving to START)
-    return before.dividedBy(2);
+    return before.plus(1);
   }
   
-  // Target position is BETWEEN 'after' and 'before'
+  // Both are not null
   return before!.plus(after!).dividedBy(2);
 }

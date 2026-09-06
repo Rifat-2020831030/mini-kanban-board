@@ -134,25 +134,17 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
 
     // Handle Column Move
     if (isActiveColumn && isOverColumn) {
-      // Find new index to determine afterColumnId
       const columns = board.columns;
       const oldIndex = columns.findIndex(c => c.id === activeId);
       const newIndex = columns.findIndex(c => c.id === overId);
       
-      let afterColumnId: string | null = null;
-      if (newIndex > 0) {
-        // If moving down, the one we drop over becomes the preceding one, 
-        // UNLESS we are moving down past it, dnd-kit gives 'over' as the item we swap with.
-        // Actually, dnd-kit sortable shifts array. 
-        // A simple robust way: simulate array shift, then find the element before it.
-        const newCols = [...columns];
-        const [moved] = newCols.splice(oldIndex, 1);
-        newCols.splice(newIndex, 0, moved);
-        
-        if (newIndex > 0) {
-          afterColumnId = newCols[newIndex - 1].id;
-        }
-      }
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+
+      const newCols = [...columns];
+      const [moved] = newCols.splice(oldIndex, 1);
+      newCols.splice(newIndex, 0, moved);
+
+      const afterColumnId = newIndex > 0 ? newCols[newIndex - 1].id : null;
 
       moveColumn.mutate({
         projectId,
