@@ -4,6 +4,8 @@ import { usersRoutes } from './users.routes';
 
 import { projectsRoutes } from './projects.routes';
 import { projectMembersRoutes } from './projectMembers.routes';
+import { boardsRoutes } from './boards.routes';
+import { boardMembersRoutes } from './boardMembers.routes';
 
 export const routes = Router();
 
@@ -15,3 +17,5 @@ routes.use('/auth', authRoutes);
 routes.use('/users', usersRoutes);
 routes.use('/projects', projectsRoutes);
 routes.use('/projects/:projectId/members', projectMembersRoutes);
+routes.use('/boards', boardsRoutes);
+routes.use('/boards/:boardId/members', boardMembersRoutes);
