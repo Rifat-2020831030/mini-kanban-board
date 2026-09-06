@@ -10,7 +10,7 @@ export function useBoardData(projectId: string, boardId: string, currentUserId: 
   return useQuery({
     queryKey: ['board', boardId],
     queryFn: async () => {
-      const res = await api.get(`/projects/${projectId}/boards/${boardId}`);
+      const res = await api.get(`/boards/${boardId}`);
       const board = res.data.board as BoardData;
       
       // Sort columns by position

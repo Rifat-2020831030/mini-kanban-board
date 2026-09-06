@@ -6,7 +6,7 @@ export function useTask(projectId: string, boardId: string, taskId: string | nul
   return useQuery({
     queryKey: ['task', taskId],
     queryFn: async () => {
-      const res = await api.get(`/projects/${projectId}/boards/${boardId}/tasks/${taskId}`);
+      const res = await api.get(`/boards/${boardId}/tasks/${taskId}`);
       return res.data.task as Task;
     },
     enabled: !!projectId && !!boardId && !!taskId,

@@ -16,7 +16,7 @@ export function useUpdateTask() {
 
   return useMutation({
     mutationFn: async ({ projectId, boardId, taskId, ...data }: UpdateTaskParams) => {
-      const res = await api.patch(`/projects/${projectId}/boards/${boardId}/tasks/${taskId}`, data);
+      const res = await api.patch(`/boards/${boardId}/tasks/${taskId}`, data);
       return res.data.task;
     },
     onSuccess: (data, variables) => {

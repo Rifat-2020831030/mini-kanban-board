@@ -23,7 +23,7 @@ export function ColumnHeader({ projectId, boardId, columnId, name, taskCount, is
 
   const renameMutation = useMutation({
     mutationFn: async (newName: string) => {
-      await api.patch(`/projects/${projectId}/boards/${boardId}/columns/${columnId}`, { name: newName });
+      await api.patch(`/boards/${boardId}/columns/${columnId}`, { name: newName });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['board', boardId] });
@@ -33,7 +33,7 @@ export function ColumnHeader({ projectId, boardId, columnId, name, taskCount, is
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      await api.delete(`/projects/${projectId}/boards/${boardId}/columns/${columnId}`);
+      await api.delete(`/boards/${boardId}/columns/${columnId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['board', boardId] });

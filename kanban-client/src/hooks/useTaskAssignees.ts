@@ -13,7 +13,7 @@ export function useTaskAssignees() {
 
   const addAssignee = useMutation({
     mutationFn: async ({ projectId, boardId, taskId, userId }: AssigneeParams) => {
-      await api.post(`/projects/${projectId}/boards/${boardId}/tasks/${taskId}/assignees`, { userId });
+      await api.post(`/boards/${boardId}/tasks/${taskId}/assignees`, { userId });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task', variables.taskId] });
@@ -23,7 +23,7 @@ export function useTaskAssignees() {
 
   const removeAssignee = useMutation({
     mutationFn: async ({ projectId, boardId, taskId, userId }: AssigneeParams) => {
-      await api.delete(`/projects/${projectId}/boards/${boardId}/tasks/${taskId}/assignees/${userId}`);
+      await api.delete(`/boards/${boardId}/tasks/${taskId}/assignees/${userId}`);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task', variables.taskId] });

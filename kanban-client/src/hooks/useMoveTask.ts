@@ -15,7 +15,7 @@ export function useMoveTask() {
 
   return useMutation({
     mutationFn: async ({ projectId, boardId, taskId, columnId, afterTaskId }: MoveTaskParams) => {
-      const res = await api.patch(`/projects/${projectId}/boards/${boardId}/tasks/${taskId}/move`, {
+      const res = await api.patch(`/boards/${boardId}/tasks/${taskId}/move`, {
         columnId,
         afterTaskId,
       });

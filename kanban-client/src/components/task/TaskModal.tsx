@@ -39,7 +39,7 @@ export function TaskModal({ projectId, boardId, taskId, myRole }: TaskModalProps
 
   const deleteTask = useMutation({
     mutationFn: async () => {
-      await api.delete(`/projects/${projectId}/boards/${boardId}/tasks/${taskId}`);
+      await api.delete(`/boards/${boardId}/tasks/${taskId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['board', boardId] });

@@ -13,7 +13,7 @@ export function useTaskLabels() {
 
   const addLabel = useMutation({
     mutationFn: async ({ projectId, boardId, taskId, labelId }: LabelParams) => {
-      await api.post(`/projects/${projectId}/boards/${boardId}/tasks/${taskId}/labels`, { labelId });
+      await api.post(`/boards/${boardId}/tasks/${taskId}/labels`, { labelId });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task', variables.taskId] });
@@ -23,7 +23,7 @@ export function useTaskLabels() {
 
   const removeLabel = useMutation({
     mutationFn: async ({ projectId, boardId, taskId, labelId }: LabelParams) => {
-      await api.delete(`/projects/${projectId}/boards/${boardId}/tasks/${taskId}/labels/${labelId}`);
+      await api.delete(`/boards/${boardId}/tasks/${taskId}/labels/${labelId}`);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task', variables.taskId] });

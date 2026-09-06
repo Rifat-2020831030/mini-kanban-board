@@ -9,7 +9,7 @@ export function TaskLifecycle({ taskId, boardId, projectId }: { taskId: string, 
   const { data: events, isLoading } = useQuery({
     queryKey: ['task', taskId, 'lifecycle'],
     queryFn: async () => {
-      const res = await api.get(`/projects/${projectId}/boards/${boardId}/tasks/${taskId}/lifecycle`);
+      const res = await api.get(`/boards/${boardId}/tasks/${taskId}/lifecycle`);
       return res.data.events as TaskLifecycleEvent[];
     }
   });

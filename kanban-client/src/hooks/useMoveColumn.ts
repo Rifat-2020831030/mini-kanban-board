@@ -14,7 +14,7 @@ export function useMoveColumn() {
 
   return useMutation({
     mutationFn: async ({ projectId, boardId, columnId, afterColumnId }: MoveColumnParams) => {
-      const res = await api.patch(`/projects/${projectId}/boards/${boardId}/columns/${columnId}/move`, {
+      const res = await api.patch(`/boards/${boardId}/columns/${columnId}/move`, {
         afterColumnId,
       });
       return res.data.column;

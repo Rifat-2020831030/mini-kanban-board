@@ -14,7 +14,7 @@ export function useCreateTask() {
 
   return useMutation({
     mutationFn: async ({ projectId, boardId, columnId, title, priority }: CreateTaskParams) => {
-      const res = await api.post(`/projects/${projectId}/boards/${boardId}/tasks`, {
+      const res = await api.post(`/boards/${boardId}/tasks`, {
         columnId,
         title,
         priority,
