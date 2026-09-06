@@ -47,7 +47,8 @@ export function TaskModal({ projectId, boardId, taskId, myRole }: TaskModalProps
     }
   });
 
-  const isMember = myRole === 'MEMBER';
+  const isReadOnly = (myRole as string) === 'VIEWER';
+  const isMember = isReadOnly;
 
   const completedSubtasks = task?.subtasks?.filter((st: any) => st.is_completed).length || 0;
   const totalSubtasks = task?.subtasks?.length || 0;
@@ -85,7 +86,7 @@ export function TaskModal({ projectId, boardId, taskId, myRole }: TaskModalProps
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  {!isMember && (
+                  {!isReadOnly && (
                     <button 
                       onClick={() => {
                         if (confirm('Are you sure you want to delete this task?')) {
@@ -107,19 +108,19 @@ export function TaskModal({ projectId, boardId, taskId, myRole }: TaskModalProps
               </div>
 
               <div className="flex-1 p-6 flex flex-col gap-8">
-                <TaskTitleEditor task={task} isMember={isMember} updateTask={updateTask} projectId={projectId} boardId={boardId} />
+                <TaskTitleEditor task={task} isMember={isReadOnly} updateTask={updateTask} projectId={projectId} boardId={boardId} />
                 
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="flex-1 flex flex-col gap-8">
                     <TaskDescription task={task} updateTask={updateTask} projectId={projectId} boardId={boardId} />
-                    <SubtaskList task={task} boardId={boardId} projectId={projectId} isMember={isMember} />
+                    <SubtaskList task={task} boardId={boardId} projectId={projectId} isMember={isReadOnly} />
                     <TaskLifecycle taskId={taskId} boardId={boardId} projectId={projectId} />
                   </div>
                   
                   <div className="w-full md:w-56 shrink-0 flex flex-col gap-6">
-                    <TaskMetadata task={task} updateTask={updateTask} isMember={isMember} />
-                    <TaskAssignees task={task} boardId={boardId} projectId={projectId} isMember={isMember} />
-                    <TaskLabels task={task} boardId={boardId} projectId={projectId} isMember={isMember} />
+                    <TaskMetadata task={task} updateTask={updateTask} isMember={isReadOnly} />
+                    <TaskAssignees task={task} boardId={boardId} projectId={projectId} isMember={isReadOnly} />
+                    <TaskLabels task={task} boardId={boardId} projectId={projectId} isMember={isReadOnly} />
                   </div>
                 </div>
               </div>

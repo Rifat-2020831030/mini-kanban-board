@@ -78,15 +78,16 @@ export function TaskCard({ task, columnId }: TaskCardProps) {
       {task.labels && task.labels.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {task.labels.slice(0, 3).map((l: any) => {
-            const label = l.label || l; // Depends on exact API response shape (sometimes it's a join table wrapper)
+            const label = l.label || l;
             return (
               <span
                 key={label.id}
-                className="w-8 h-1.5 rounded-full"
-                style={{ backgroundColor: label.color }}
-                title={label.name}
-              />
-            )
+                className="text-[10px] px-2 py-0.5 rounded font-medium text-zinc-100"
+                style={{ backgroundColor: label.color || '#3f3f46' }}
+              >
+                {label.name}
+              </span>
+            );
           })}
           {task.labels.length > 3 && (
             <span className="text-[10px] text-zinc-500 ml-1">+{task.labels.length - 3}</span>

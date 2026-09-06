@@ -5,9 +5,9 @@ import { BoardRole } from '@prisma/client';
 export function requireProjectMember() {
   return async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.userId;
-    const projectId = req.params.projectId || req.body.projectId;
+    const projectId = (req.params.projectId || req.body.projectId) as string;
 
-    if (!userId || !projectId) {
+    if (!userId || !projectId || projectId === 'undefined') {
       return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Missing user or project ID' } });
     }
 
@@ -28,9 +28,9 @@ export function requireProjectMember() {
 export function requireProjectAdmin() {
   return async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.userId;
-    const projectId = req.params.projectId || req.body.projectId;
+    const projectId = (req.params.projectId || req.body.projectId) as string;
 
-    if (!userId || !projectId) {
+    if (!userId || !projectId || projectId === 'undefined') {
       return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Missing user or project ID' } });
     }
 
@@ -49,9 +49,9 @@ export function requireProjectAdmin() {
 export function requireBoardAccess() {
   return async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.userId;
-    const boardId = req.params.boardId || req.body.boardId || req.params.id;
+    const boardId = (req.params.boardId || req.body.boardId || req.params.id) as string;
 
-    if (!userId || !boardId) {
+    if (!userId || !boardId || boardId === 'undefined') {
       return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Missing user or board ID' } });
     }
 
@@ -128,10 +128,10 @@ export function requireBoardRole(minRole: BoardRole) {
 export function requireTaskAccess(action: 'edit' | 'move' | 'delete') {
   return async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.userId;
-    const taskId = req.params.taskId || req.params.id;
+    const taskId = (req.params.taskId || req.params.id) as string;
 
-    if (!userId || !taskId) {
-      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Missing user or task ID' } });
+    if (!userId || !taskId || taskId === 'undefined') {
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Missing or invalid task ID' } });
     }
 
     const task = await prisma.task.findUnique({

@@ -13,6 +13,7 @@ interface AddTaskFormProps {
 export function AddTaskForm({ projectId, boardId, columnId }: AddTaskFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState('');
+  const [priority, setPriority] = useState<'NONE' | 'LOW' | 'MEDIUM' | 'HIGH'>('NONE');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const createTask = useCreateTask();
@@ -33,10 +34,11 @@ export function AddTaskForm({ projectId, boardId, columnId }: AddTaskFormProps) 
     
     isSubmitting.current = true;
     createTask.mutate(
-      { projectId, boardId, columnId, title: title.trim(), priority: 'NONE' },
+      { projectId, boardId, columnId, title: title.trim(), priority },
       {
         onSuccess: () => {
           setTitle('');
+          setPriority('NONE');
           setIsEditing(false);
           isSubmitting.current = false;
         },
@@ -53,32 +55,52 @@ export function AddTaskForm({ projectId, boardId, columnId }: AddTaskFormProps) 
       handleSubmit();
     } else if (e.key === 'Escape') {
       setTitle('');
+      setPriority('NONE');
       setIsEditing(false);
     }
   };
 
   if (isEditing) {
     return (
-      <div className="mt-2 p-2 bg-zinc-900 border border-zinc-800 rounded-md">
+      <div className="mt-2 p-2 bg-zinc-900 border border-zinc-800 rounded-md flex flex-col gap-2">
         <textarea
           ref={textareaRef}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={handleKeyDown}
-          onBlur={handleSubmit}
           placeholder="What needs to be done?"
           className="w-full bg-transparent text-sm text-zinc-50 placeholder:text-zinc-500 resize-none outline-none"
           rows={2}
           disabled={createTask.isPending}
         />
-        <div className="flex items-center justify-end gap-2 mt-2">
-          <button
-            onMouseDown={(e) => { e.preventDefault(); handleSubmit(); }}
-            disabled={createTask.isPending}
-            className="px-3 py-1 bg-zinc-50 text-zinc-950 text-xs font-medium rounded hover:bg-zinc-200"
+        <div className="flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2">
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as any)}
+            className="bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 outline-none"
           >
-            Add
-          </button>
+            <option value="NONE">Priority: None</option>
+            <option value="LOW">Priority: Low</option>
+            <option value="MEDIUM">Priority: Medium</option>
+            <option value="HIGH">Priority: High</option>
+          </select>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setTitle(''); setPriority('NONE'); setIsEditing(false); }}
+              type="button"
+              className="px-2 py-1 text-zinc-400 text-xs hover:text-zinc-50"
+            >
+              Cancel
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); handleSubmit(); }}
+              disabled={createTask.isPending || !title.trim()}
+              className="px-3 py-1 bg-zinc-50 text-zinc-950 text-xs font-medium rounded hover:bg-zinc-200 disabled:opacity-50"
+            >
+              Add
+            </button>
+          </div>
         </div>
       </div>
     );
