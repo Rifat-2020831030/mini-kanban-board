@@ -1,30 +1,95 @@
 import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Plus, Settings } from 'lucide-react';
+import Link from 'next/link';
 import { BoardData } from '@/hooks/useBoardData';
 import { BoardMembersModal } from './BoardMembersModal';
+import { ProjectMember } from '@/types/api';
 
 interface BoardHeaderProps {
   board: BoardData;
+  isAdmin: boolean;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
 }
 
-export function BoardHeader({ board, searchQuery, onSearchChange }: BoardHeaderProps) {
+const getRoleColor = (role: string) => {
+  switch (role) {
+    case 'ADMIN':
+      return 'bg-red-500/20 text-red-400 border-[#09090b]';
+    case 'MEMBER':
+      return 'bg-blue-500/20 text-blue-400 border-[#09090b]';
+    case 'VIEWER':
+      return 'bg-emerald-500/20 text-emerald-400 border-[#09090b]';
+    default:
+      return 'bg-zinc-800 text-zinc-300 border-[#09090b]';
+  }
+};
+
+export function BoardHeader({ board, isAdmin, searchQuery, onSearchChange }: BoardHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const members = board.board_members || [];
+  const members = board.members || [];
   const displayMembers = members.slice(0, 5);
   const excess = members.length - 5;
 
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 px-6 border-b border-zinc-800 bg-[#09090b]">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold text-zinc-50">{board.name}</h1>
-          {board.description && (
-            <p className="text-sm text-zinc-400">{board.description}</p>
-          )}
+        {/* Left side: Title, Description, and Members */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-xl font-semibold text-zinc-50">{board.name}</h1>
+            {board.description && (
+              <p className="text-sm text-zinc-400">{board.description}</p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div 
+              className="flex items-center -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setIsModalOpen(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setIsModalOpen(true);
+              }}
+            >
+              {displayMembers.map((member) => (
+                <div
+                  key={member.user_id}
+                  className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[11px] font-semibold overflow-hidden ${getRoleColor(member.role)}`}
+                  title={`${member.user.username} (${member.role})`}
+                >
+                  {member.user.username.charAt(0).toUpperCase()}
+                </div>
+              ))}
+              {excess > 0 && (
+                <div className="w-7 h-7 rounded-full bg-zinc-800 border-2 border-[#09090b] flex items-center justify-center text-[10px] font-medium text-zinc-400">
+                  +{excess}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-50 transition-colors"
+                title="Add Member"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              
+              <Link
+                href="/settings"
+                className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-50 transition-colors"
+                title="Project Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
         </div>
 
+        {/* Right side: Search */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           {onSearchChange && (
             <div className="relative">
@@ -38,38 +103,13 @@ export function BoardHeader({ board, searchQuery, onSearchChange }: BoardHeaderP
               />
             </div>
           )}
-
-          <div 
-            className="flex items-center -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => setIsModalOpen(true)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                setIsModalOpen(true);
-              }
-            }}
-          >
-            {displayMembers.map((member) => (
-              <div
-                key={member.user_id}
-                className="w-7 h-7 rounded-full bg-zinc-800 border-2 border-[#09090b] flex items-center justify-center text-xs font-medium text-zinc-50 overflow-hidden"
-                title={`${member.user.username} (${member.role})`}
-              >
-                {member.user.username.substring(0, 2).toUpperCase()}
-              </div>
-            ))}
-            {excess > 0 && (
-              <div className="w-7 h-7 rounded-full bg-zinc-800 border-2 border-[#09090b] flex items-center justify-center text-[10px] font-medium text-zinc-400">
-                +{excess}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
       <BoardMembersModal 
         members={members} 
+        projectId={board.project_id}
+        isAdmin={isAdmin}
         open={isModalOpen} 
         onOpenChange={setIsModalOpen} 
       />

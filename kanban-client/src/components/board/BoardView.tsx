@@ -219,7 +219,7 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <BoardHeader board={board} searchQuery={taskSearchQuery} onSearchChange={setTaskSearchQuery} />
+      <BoardHeader board={board} isAdmin={isAdmin} searchQuery={taskSearchQuery} onSearchChange={setTaskSearchQuery} />
       
       <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-[#09090b]">
         <DndContext
