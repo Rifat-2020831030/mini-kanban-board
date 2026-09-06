@@ -9,5 +9,5 @@ export const boardMembersRoutes = Router({ mergeParams: true });
 boardMembersRoutes.use(authGuard);
 boardMembersRoutes.get('/', requireBoardAccess(), listBoardMembers);
 boardMembersRoutes.post('/', requireBoardRole('OWNER'), validate(addBoardMemberSchema), addBoardMember);
-boardMembersRoutes.put('/:memberId', requireBoardRole('OWNER'), validate(updateBoardMemberSchema), updateBoardMember);
+boardMembersRoutes.patch('/:memberId', requireBoardRole('OWNER'), validate(updateBoardMemberSchema), updateBoardMember);
 boardMembersRoutes.delete('/:memberId', requireBoardAccess(), requireBoardRole('OWNER'), removeBoardMember);

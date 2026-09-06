@@ -8,6 +8,6 @@ export const columnsRoutes = Router({ mergeParams: true });
 
 columnsRoutes.use(authGuard);
 columnsRoutes.post('/', requireBoardAccess(), requireBoardRole('EDITOR'), validate(createColumnSchema), createColumn);
-columnsRoutes.put('/:columnId/rename', requireBoardAccess(), requireBoardRole('EDITOR'), validate(renameColumnSchema), renameColumn);
-columnsRoutes.put('/:columnId/move', requireBoardAccess(), requireBoardRole('EDITOR'), validate(moveColumnSchema), moveColumn);
+columnsRoutes.patch('/:columnId/rename', requireBoardAccess(), requireBoardRole('EDITOR'), validate(renameColumnSchema), renameColumn);
+columnsRoutes.patch('/:columnId/move', requireBoardAccess(), requireBoardRole('EDITOR'), validate(moveColumnSchema), moveColumn);
 columnsRoutes.delete('/:columnId', requireBoardAccess(), requireBoardRole('EDITOR'), deleteColumn);

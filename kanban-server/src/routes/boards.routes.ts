@@ -10,5 +10,5 @@ boardsRoutes.use(authGuard);
 boardsRoutes.post('/', validate(createBoardSchema), createBoard);
 boardsRoutes.get('/', listBoards);
 boardsRoutes.get('/:boardId', requireBoardAccess(), getBoardById);
-boardsRoutes.put('/:boardId', requireBoardRole('EDITOR'), validate(updateBoardSchema), updateBoard);
+boardsRoutes.patch('/:boardId', requireBoardRole('EDITOR'), validate(updateBoardSchema), updateBoard);
 boardsRoutes.delete('/:boardId', requireBoardRole('OWNER'), deleteBoard);

@@ -10,7 +10,7 @@ tasksRoutes.use(authGuard);
 // These are typically mounted at /boards/:boardId/tasks
 tasksRoutes.post('/', requireBoardAccess(), validate(createTaskSchema), createTask);
 tasksRoutes.get('/:taskId', requireTaskAccess('edit'), getTask); // edit implies read
-tasksRoutes.put('/:taskId', requireTaskAccess('edit'), validate(updateTaskSchema), updateTask);
-tasksRoutes.put('/:taskId/move', requireTaskAccess('move'), validate(moveTaskSchema), moveTask);
+tasksRoutes.patch('/:taskId', requireTaskAccess('edit'), validate(updateTaskSchema), updateTask);
+tasksRoutes.patch('/:taskId/move', requireTaskAccess('move'), validate(moveTaskSchema), moveTask);
 tasksRoutes.delete('/:taskId', requireTaskAccess('delete'), deleteTask);
 tasksRoutes.get('/:taskId/lifecycle', requireTaskAccess('edit'), getTaskLifecycle);

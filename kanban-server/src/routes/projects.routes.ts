@@ -9,4 +9,4 @@ export const projectsRoutes = Router();
 projectsRoutes.use(authGuard);
 projectsRoutes.post('/', validate(createProjectSchema), createProject);
 projectsRoutes.get('/me', getMyProject);
-projectsRoutes.put('/:projectId', requireProjectAdmin(), validate(updateProjectSchema), updateProject);
+projectsRoutes.patch('/:projectId', requireProjectAdmin(), validate(updateProjectSchema), updateProject);

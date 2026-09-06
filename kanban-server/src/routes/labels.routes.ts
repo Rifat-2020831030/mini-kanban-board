@@ -10,7 +10,7 @@ export const taskLabelsRoutes = Router({ mergeParams: true });
 labelsRoutes.use(authGuard);
 labelsRoutes.get('/', requireBoardAccess(), listLabels);
 labelsRoutes.post('/', requireBoardAccess(), requireBoardRole('EDITOR'), validate(createLabelSchema), createLabel);
-labelsRoutes.put('/:labelId', requireBoardAccess(), requireBoardRole('EDITOR'), validate(updateLabelSchema), updateLabel);
+labelsRoutes.patch('/:labelId', requireBoardAccess(), requireBoardRole('EDITOR'), validate(updateLabelSchema), updateLabel);
 labelsRoutes.delete('/:labelId', requireBoardAccess(), requireBoardRole('EDITOR'), deleteLabel);
 
 taskLabelsRoutes.use(authGuard);

@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { Board, Project, ProjectMember } from '@/types/api';
 import { BoardCard } from '@/components/boards/BoardCard';
 import { CreateBoardModal } from '@/components/boards/CreateBoardModal';
+import { CreateProjectModal } from '@/components/projects/CreateProjectModal';
 import { useEffect, useState } from 'react';
 
 // Skeletons
@@ -46,7 +47,7 @@ export default function BoardsPage() {
     queryKey: ['project', 'me'],
     queryFn: async () => {
       const res = await api.get('/projects/me');
-      return res.data.project as Project;
+      return res.data as Project;
     },
     retry: false
   });
@@ -56,7 +57,7 @@ export default function BoardsPage() {
     queryKey: ['project', projectData?.id, 'members'],
     queryFn: async () => {
       const res = await api.get(`/projects/${projectData?.id}/members`);
-      return res.data.members as ProjectMember[];
+      return res.data as ProjectMember[];
     },
     enabled: !!projectData?.id,
   });
@@ -68,8 +69,8 @@ export default function BoardsPage() {
   const { data: boardsData, isLoading: boardsLoading } = useQuery({
     queryKey: ['boards', projectData?.id],
     queryFn: async () => {
-      const res = await api.get(`/projects/${projectData?.id}/boards`);
-      return res.data.boards as Board[];
+      const res = await api.get(`/boards?projectId=${projectData?.id}`);
+      return res.data as Board[];
     },
     enabled: !!projectData?.id,
   });
@@ -78,11 +79,19 @@ export default function BoardsPage() {
 
   if (projectError) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center mt-20">
         <h2 className="text-xl font-semibold text-zinc-50 mb-2">Welcome to Kanban</h2>
         <p className="text-zinc-400 mb-6 max-w-md">
-          You are not a member of any project yet. Please wait for an invitation or contact an administrator.
+          You are not a member of any project yet. You can either wait for an invitation from an administrator or create a new workspace yourself.
         </p>
+        <CreateProjectModal 
+          trigger={
+            <button className="flex items-center gap-2 bg-zinc-50 text-zinc-950 px-5 py-2.5 rounded-md font-medium text-sm hover:bg-zinc-200 transition-colors">
+              <Plus className="w-4 h-4" />
+              Create new workspace
+            </button>
+          }
+        />
       </div>
     );
   }

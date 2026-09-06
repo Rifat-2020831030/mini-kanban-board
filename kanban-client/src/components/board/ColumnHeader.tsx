@@ -23,7 +23,7 @@ export function ColumnHeader({ projectId, boardId, columnId, name, taskCount, is
 
   const renameMutation = useMutation({
     mutationFn: async (newName: string) => {
-      await api.patch(`/boards/${boardId}/columns/${columnId}`, { name: newName });
+      await api.patch(`/boards/${boardId}/columns/${columnId}/rename`, { name: newName });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['board', boardId] });

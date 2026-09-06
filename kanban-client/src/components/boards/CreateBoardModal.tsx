@@ -19,8 +19,8 @@ export function CreateBoardModal({ projectId, trigger }: CreateBoardModalProps) 
 
   const createBoard = useMutation({
     mutationFn: async () => {
-      const res = await api.post(`/projects/${projectId}/boards`, { name, description: description || null });
-      return res.data.board;
+      const res = await api.post(`/boards`, { projectId, name, description: description || null });
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['boards', projectId] });
