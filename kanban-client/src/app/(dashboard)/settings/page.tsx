@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Settings, Users, Shield, Trash2, Loader2, Plus } from 'lucide-react';
+import { Settings, Users, Shield, Trash2, Loader2, Plus, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Project, ProjectMember, User } from '@/types/api';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [projectName, setProjectName] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'ADMIN' | 'MEMBER'>('MEMBER');
   
@@ -40,18 +43,21 @@ export default function SettingsPage() {
   useEffect(() => {
     if (project) {
       setProjectName(project.name);
+      setProjectDescription(project.description || '');
     }
   }, [project]);
 
   const isAdmin = members?.some(m => m.user_id === me?.id && m.role === 'ADMIN') || false;
 
   const updateProjectMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const res = await api.patch(`/projects/${project?.id}`, { name });
+    mutationFn: async (data: { name: string; description: string }) => {
+      const res = await api.patch(`/projects/${project?.id}`, data);
       return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', 'me'] });
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
     }
   });
 
@@ -88,8 +94,8 @@ export default function SettingsPage() {
 
   const handleUpdateProject = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectName.trim() || projectName === project?.name) return;
-    updateProjectMutation.mutate(projectName);
+    if (!projectName.trim() || (projectName === project?.name && projectDescription === (project?.description || ''))) return;
+    updateProjectMutation.mutate({ name: projectName, description: projectDescription });
   };
 
   const handleInvite = (e: React.FormEvent) => {
@@ -119,6 +125,14 @@ export default function SettingsPage() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto w-full">
+      <Link 
+        href="/boards" 
+        className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-50 transition-colors mb-6"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Boards
+      </Link>
+
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-zinc-50 flex items-center gap-2">
           <Settings className="w-6 h-6 text-zinc-400" />
@@ -130,13 +144,21 @@ export default function SettingsPage() {
       <div className="space-y-8">
         {/* General Settings */}
         <section className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-          <div className="p-6 border-b border-zinc-800">
-            <h2 className="text-lg font-medium text-zinc-50">General Information</h2>
-            <p className="text-sm text-zinc-400 mt-1">Update your project\'s basic details.</p>
+          <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
+            <div>
+              <h2 className="text-lg font-medium text-zinc-50">General Information</h2>
+              <p className="text-sm text-zinc-400 mt-1">Update your project's basic details.</p>
+            </div>
+            {showSuccess && (
+              <span className="flex items-center gap-1.5 text-emerald-400 text-sm font-medium animate-in fade-in zoom-in duration-300">
+                <CheckCircle2 className="w-4 h-4" />
+                Saved
+              </span>
+            )}
           </div>
           <div className="p-6">
-            <form onSubmit={handleUpdateProject} className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="flex-1 w-full">
+            <form onSubmit={handleUpdateProject} className="flex flex-col gap-4">
+              <div className="w-full">
                 <label htmlFor="projectName" className="block text-sm font-medium text-zinc-400 mb-1.5">
                   Project Name
                 </label>
@@ -149,14 +171,32 @@ export default function SettingsPage() {
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-700 disabled:opacity-50"
                 />
               </div>
-              <button
-                type="submit"
-                disabled={!isAdmin || updateProjectMutation.isPending || projectName === project.name}
-                className="bg-zinc-50 text-zinc-950 px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-200 transition-colors disabled:opacity-50 flex items-center gap-2 h-9"
-              >
-                {updateProjectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                Save Changes
-              </button>
+              
+              <div className="w-full">
+                <label htmlFor="projectDescription" className="block text-sm font-medium text-zinc-400 mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  id="projectDescription"
+                  value={projectDescription}
+                  onChange={(e) => setProjectDescription(e.target.value)}
+                  disabled={!isAdmin || updateProjectMutation.isPending}
+                  rows={3}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-700 disabled:opacity-50 resize-none"
+                  placeholder="Enter a brief description for this project..."
+                />
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={!isAdmin || updateProjectMutation.isPending || (projectName === project.name && projectDescription === (project.description || ''))}
+                  className="bg-zinc-50 text-zinc-950 px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-200 transition-colors disabled:opacity-50 flex items-center gap-2 h-9"
+                >
+                  {updateProjectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save Changes
+                </button>
+              </div>
             </form>
           </div>
         </section>
@@ -216,7 +256,7 @@ export default function SettingsPage() {
                 </button>
               </form>
               {inviteMemberMutation.isError && (
-                <p className="text-red-400 text-sm mt-2">Failed to invite member. Check if email exists.</p>
+                <p className="text-red-400 text-sm mt-2">User with this email not found. They must create an account first.</p>
               )}
             </div>
           )}

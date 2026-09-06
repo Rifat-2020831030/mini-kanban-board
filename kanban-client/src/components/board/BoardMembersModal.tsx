@@ -105,7 +105,7 @@ export function BoardMembersModal({ members, projectId, isAdmin, open, onOpenCha
                   Invite
                 </button>
                 {inviteMemberMutation.isError && (
-                  <p className="text-red-400 text-xs text-center">Failed to invite member.</p>
+                  <p className="text-red-400 text-xs text-center">User not found. They must sign up first.</p>
                 )}
               </form>
             )}
