@@ -15,8 +15,10 @@ export function useUpdateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ projectId, boardId, taskId, ...data }: UpdateTaskParams) => {
-      const res = await api.patch(`/boards/${boardId}/tasks/${taskId}`, data);
+    mutationFn: async ({ projectId, boardId, taskId, due_date, ...data }: UpdateTaskParams) => {
+      const payload: any = { ...data };
+      if (due_date !== undefined) payload.dueDate = due_date;
+      const res = await api.patch(`/boards/${boardId}/tasks/${taskId}`, payload);
       return res.data.task;
     },
     onSuccess: (data, variables) => {

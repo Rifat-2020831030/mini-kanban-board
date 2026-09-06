@@ -16,7 +16,7 @@ export function useSubtasks() {
 
   const updateSubtask = useMutation({
     mutationFn: async ({ projectId, boardId, taskId, subtaskId, title, is_completed, afterSubtaskId }: { projectId: string, boardId: string, taskId: string, subtaskId: string, title?: string, is_completed?: boolean, afterSubtaskId?: string | null }) => {
-      await api.patch(`/boards/${boardId}/tasks/${taskId}/subtasks/${subtaskId}`, { title, is_completed, afterSubtaskId });
+      await api.patch(`/boards/${boardId}/tasks/${taskId}/subtasks/${subtaskId}`, { title, isCompleted: is_completed, afterSubtaskId });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task', variables.taskId] });
