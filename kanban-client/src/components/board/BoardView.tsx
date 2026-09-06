@@ -25,6 +25,9 @@ import { useMoveColumn } from '@/hooks/useMoveColumn';
 import { KanbanColumn } from './KanbanColumn';
 import { BoardHeader } from './BoardHeader';
 import { TaskCard } from './TaskCard';
+import { useSocket } from '@/providers/SocketProvider';
+import { useBoardSocket } from '@/hooks/useBoardSocket';
+import { useEffect } from 'react';
 
 interface BoardViewProps {
   projectId: string;
@@ -38,6 +41,19 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
 
   const moveTask = useMoveTask();
   const moveColumn = useMoveColumn();
+
+  useBoardSocket(board.id, projectId);
+
+  const socket = useSocket();
+
+  useEffect(() => {
+    if (socket && board.id) {
+      socket.emit('join:board', board.id);
+      return () => {
+        socket.emit('leave:board', board.id);
+      };
+    }
+  }, [socket, board.id]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
