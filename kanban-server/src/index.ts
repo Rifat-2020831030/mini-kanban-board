@@ -1,22 +1,26 @@
-import express, { Express, Request, Response } from 'express';
+import express from 'express';
+import http from 'http';
 import cors from 'cors';
+import dotenv from 'dotenv';
+import { initSocket } from './socket';
+import { routes } from './routes';
 import { errorHandler } from './middlewares/errorHandler';
-import routes from './routes';
 
-const app: Express = express();
-const port = process.env.PORT || 4000;
+dotenv.config();
 
-app.use(cors());
+const app = express();
+const server = http.createServer(app);
+
+initSocket(server);
+
+app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000' }));
 app.use(express.json());
 
 app.use('/api', routes);
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Kanban Server is running');
-});
-
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+const PORT = process.env.PORT || 4000;
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
