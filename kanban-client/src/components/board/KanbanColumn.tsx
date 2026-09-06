@@ -52,7 +52,7 @@ export function KanbanColumn({ projectId, boardId, column, isAdmin }: KanbanColu
     <div
       ref={setNodeRef}
       style={style}
-      className="shrink-0 w-72 flex flex-col max-h-full"
+      className="relative shrink-0 w-72 flex flex-col max-h-full after:absolute after:top-0 after:bottom-0 after:-right-3 after:w-px after:border-r after:border-dashed after:border-zinc-800 last:after:hidden"
     >
       <div 
         {...attributes}

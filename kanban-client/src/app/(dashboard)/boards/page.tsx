@@ -32,7 +32,7 @@ export default function BoardsPage() {
     queryKey: ['me'],
     queryFn: async () => {
       const res = await api.get('/users/me');
-      return res.data;
+      return res.data.user;
     }
   });
 

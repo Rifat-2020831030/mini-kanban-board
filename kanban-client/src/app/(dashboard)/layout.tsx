@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     queryKey: ['me'],
     queryFn: async () => {
       const res = await api.get('/users/me');
-      return res.data;
+      return res.data.user;
     },
     enabled: mounted && isAuthenticated(),
   });

@@ -104,6 +104,17 @@ export function useBoardSocket(boardId: string, projectId: string) {
       });
     });
 
+    socket.on('columns:created', (columns: Column[]) => {
+      queryClient.setQueryData(['board', boardId], (old: BoardData | undefined) => {
+        if (!old) return old;
+        const newCols = columns.map(col => ({ ...col, tasks: [] }));
+        return {
+          ...old,
+          columns: [...old.columns, ...newCols].sort((a, b) => Number(a.position) - Number(b.position))
+        };
+      });
+    });
+
     socket.on('column:renamed', ({ columnId, name }: { columnId: string, name: string }) => {
       queryClient.setQueryData(['board', boardId], (old: BoardData | undefined) => {
         if (!old) return old;
@@ -261,6 +272,7 @@ export function useBoardSocket(boardId: string, projectId: string) {
       socket.off('task:updated');
       socket.off('task:deleted');
       socket.off('column:created');
+      socket.off('columns:created');
       socket.off('column:renamed');
       socket.off('column:moved');
       socket.off('column:deleted');

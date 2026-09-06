@@ -7,7 +7,7 @@ export const createBoardSchema = z.object({
   body: z.object({
     projectId: z.string().uuid(),
     name: z.string().min(1).max(255),
-    description: z.string().optional(),
+    description: z.string().nullable().optional(),
   }),
 });
 
@@ -122,7 +122,7 @@ export async function getBoardById(req: Request, res: Response, next: NextFuncti
 export const updateBoardSchema = z.object({
   body: z.object({
     name: z.string().min(1).max(255).optional(),
-    description: z.string().optional(),
+    description: z.string().nullable().optional(),
   }),
 });
 

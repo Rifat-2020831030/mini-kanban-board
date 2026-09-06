@@ -17,6 +17,8 @@ export function AddTaskForm({ projectId, boardId, columnId }: AddTaskFormProps) 
   
   const createTask = useCreateTask();
 
+  const isSubmitting = useRef(false);
+
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
@@ -24,17 +26,22 @@ export function AddTaskForm({ projectId, boardId, columnId }: AddTaskFormProps) 
   }, [isEditing]);
 
   const handleSubmit = () => {
-    if (!title.trim()) {
-      setIsEditing(false);
+    if (!title.trim() || isSubmitting.current) {
+      if (!title.trim()) setIsEditing(false);
       return;
     }
     
+    isSubmitting.current = true;
     createTask.mutate(
       { projectId, boardId, columnId, title: title.trim(), priority: 'NONE' },
       {
         onSuccess: () => {
           setTitle('');
           setIsEditing(false);
+          isSubmitting.current = false;
+        },
+        onError: () => {
+          isSubmitting.current = false;
         }
       }
     );

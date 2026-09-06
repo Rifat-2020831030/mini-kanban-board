@@ -11,6 +11,12 @@ export const createColumnSchema = z.object({
   }),
 });
 
+export const bulkCreateColumnSchema = z.object({
+  body: z.object({
+    names: z.array(z.string().min(1).max(255)).min(1),
+  }),
+});
+
 export async function createColumn(req: Request, res: Response, next: NextFunction) {
   try {
     const boardId = req.params.boardId;
@@ -29,6 +35,37 @@ export async function createColumn(req: Request, res: Response, next: NextFuncti
 
     io.to(`board:${boardId}`).emit('column:created', column);
     res.status(201).json(column);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function bulkCreateColumns(req: Request, res: Response, next: NextFunction) {
+  try {
+    const boardId = req.params.boardId;
+    const { names } = req.body;
+
+    const lastCol = await prisma.column.findFirst({
+      where: { board_id: boardId, deleted_at: null },
+      orderBy: { position: 'desc' },
+    });
+
+    let currentPosition = lastCol ? lastCol.position : new Decimal(0);
+
+    const columns = await prisma.$transaction(async (tx) => {
+      const createdColumns = [];
+      for (const name of names) {
+        currentPosition = currentPosition.plus(1);
+        const col = await tx.column.create({
+          data: { board_id: boardId, name, position: currentPosition },
+        });
+        createdColumns.push(col);
+      }
+      return createdColumns;
+    });
+
+    io.to(`board:${boardId}`).emit('columns:created', columns);
+    res.status(201).json(columns);
   } catch (err) {
     next(err);
   }

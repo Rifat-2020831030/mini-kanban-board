@@ -22,7 +22,7 @@ export default function BoardPage() {
     queryKey: ['me'],
     queryFn: async () => {
       const res = await api.get('/users/me');
-      return res.data;
+      return res.data.user;
     }
   });
 
@@ -31,7 +31,7 @@ export default function BoardPage() {
     queryKey: ['project', 'me'],
     queryFn: async () => {
       const res = await api.get('/projects/me');
-      return res.data.project as Project;
+      return res.data as Project;
     }
   });
 
@@ -42,7 +42,7 @@ export default function BoardPage() {
     user?.id as string
   );
 
-  if (isLoading || !boardData) {
+  if (isLoading || !boardData || !project) {
     return (
       <div className="flex flex-col h-full bg-[#09090b]">
         <div className="h-20 border-b border-zinc-800 animate-pulse bg-zinc-900/20" />

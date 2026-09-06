@@ -19,6 +19,7 @@
 ## 3. Workflow & Parallel Execution
 
 - **Modular Commits**: Every small, logical chunk of work must be committed immediately. We use Conventional Commits (e.g., `feat: auth controller`, `fix: board permissions`).
+- **Commit Approval**: Before making any git commit, you MUST ask the user for permission and present the proposed commit message to them. Wait for their explicit approval before proceeding to commit.
 - **Parallel Subagents**: When possible, backend and frontend tasks that do not strictly depend on each other should be executed by spawning independent subagents concurrently.
 
 ## 4. Backend API Rules

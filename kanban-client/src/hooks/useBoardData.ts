@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Board, Column, Task } from '@/types/api';
+import { Board, BoardMember, Column, Task } from '@/types/api';
 
 export interface BoardData extends Board {
   columns: (Column & { tasks: Task[] })[];
+  board_members?: BoardMember[];
 }
 
 export function useBoardData(projectId: string, boardId: string, currentUserId: string | null) {
@@ -11,7 +12,7 @@ export function useBoardData(projectId: string, boardId: string, currentUserId: 
     queryKey: ['board', boardId],
     queryFn: async () => {
       const res = await api.get(`/boards/${boardId}`);
-      const board = res.data.board as BoardData;
+      const board = res.data as BoardData;
       
       // Sort columns by position
       board.columns?.sort((a, b) => Number(a.position) - Number(b.position));
@@ -27,11 +28,12 @@ export function useBoardData(projectId: string, boardId: string, currentUserId: 
       
       return board;
     },
-    enabled: !!projectId && !!boardId && !!currentUserId,
+    enabled: !!boardId,
     select: (board) => {
-      const myMember = board.members?.find(m => m.user_id === currentUserId);
+      // API returns board_members (Prisma field name), not members
+      const myMember = board.board_members?.find(m => m.user_id === currentUserId);
       const myRole = myMember?.role || 'MEMBER';
-      const isAdmin = myRole === 'OWNER' || myRole === 'EDITOR'; // Project Admin check needs project context, but for board actions OWNER/EDITOR usually suffice
+      const isAdmin = myRole === 'OWNER' || myRole === 'EDITOR';
       return { board, columns: board.columns, myRole, isAdmin };
     }
   });

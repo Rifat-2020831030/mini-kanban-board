@@ -10,8 +10,8 @@ export const createTaskSchema = z.object({
   body: z.object({
     columnId: z.string().uuid(),
     title: z.string().min(1).max(255),
-    description: z.string().optional(),
-    dueDate: z.string().optional(),
+    description: z.string().nullable().optional(),
+    dueDate: z.string().nullable().optional(),
     priority: z.enum(['NONE', 'LOW', 'MEDIUM', 'HIGH']).optional(),
   }),
 });

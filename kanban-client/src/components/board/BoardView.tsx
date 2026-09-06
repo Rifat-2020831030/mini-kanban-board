@@ -25,6 +25,7 @@ import { useMoveColumn } from '@/hooks/useMoveColumn';
 import { KanbanColumn } from './KanbanColumn';
 import { BoardHeader } from './BoardHeader';
 import { TaskCard } from './TaskCard';
+import { CreateColumnModal } from './CreateColumnModal';
 import { useSocket } from '@/providers/SocketProvider';
 import { useBoardSocket } from '@/hooks/useBoardSocket';
 import { useEffect } from 'react';
@@ -212,7 +213,7 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
           onDragOver={onDragOver}
           onDragEnd={onDragEnd}
         >
-          <div className="flex items-start gap-6 h-full">
+          <div className="flex items-stretch gap-6 h-fit max-h-full">
             <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
               {board.columns.map(column => (
                 <KanbanColumn 
@@ -227,9 +228,15 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
             
             {/* Add Column Button (Optional extra) */}
             {isAdmin && (
-              <button className="shrink-0 w-72 h-12 flex items-center justify-center gap-2 rounded-lg border border-zinc-800 border-dashed text-zinc-500 hover:text-zinc-50 hover:bg-zinc-900 transition-colors">
-                <span className="text-sm font-medium">+ Add Column</span>
-              </button>
+              <CreateColumnModal
+                projectId={projectId}
+                boardId={board.id}
+                trigger={
+                  <button className="shrink-0 w-72 h-12 flex items-center justify-center gap-2 rounded-lg border border-zinc-800 border-dashed text-zinc-500 hover:text-zinc-50 hover:bg-zinc-900 transition-colors">
+                    <span className="text-sm font-medium">+ Add Column</span>
+                  </button>
+                }
+              />
             )}
           </div>
 
