@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Board, Project, ProjectMember } from '@/types/api';
 import { BoardCard } from '@/components/boards/BoardCard';
@@ -26,6 +26,7 @@ function BoardsSkeleton() {
 
 export default function BoardsPage() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch current user (needed to find my role in project if needed, but not strictly required if we just fetch projects/me)
   const { data: user } = useQuery({
@@ -106,25 +107,39 @@ export default function BoardsPage() {
           )}
         </div>
 
-        {projectData && isProjectAdmin && (
-          <CreateBoardModal 
-            projectId={projectData.id}
-            trigger={
-              <button className="flex items-center gap-2 bg-zinc-50 text-zinc-950 px-4 py-2 rounded-md font-medium text-sm hover:bg-zinc-200 transition-colors">
-                <Plus className="w-4 h-4" />
-                New Board
-              </button>
-            }
-          />
-        )}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <input 
+              type="text" 
+              placeholder="Search boards..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-zinc-900 border border-zinc-800 text-zinc-50 text-sm rounded-md pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-700 w-full sm:w-64"
+            />
+          </div>
+          {projectData && isProjectAdmin && (
+            <CreateBoardModal 
+              projectId={projectData.id}
+              trigger={
+                <button className="flex items-center gap-2 bg-zinc-50 text-zinc-950 px-4 py-2 rounded-md font-medium text-sm hover:bg-zinc-200 transition-colors">
+                  <Plus className="w-4 h-4" />
+                  New Board
+                </button>
+              }
+            />
+          )}
+        </div>
       </div>
 
       {isLoading ? (
         <BoardsSkeleton />
       ) : boardsData && boardsData.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {boardsData.map(board => (
-            <BoardCard key={board.id} board={board} />
+          {boardsData
+            .filter(board => board.name.toLowerCase().includes(searchQuery.toLowerCase()))
+            .map(board => (
+              <BoardCard key={board.id} board={board} />
           ))}
         </div>
       ) : (

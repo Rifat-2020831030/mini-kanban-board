@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   DndContext, 
   DragOverlay, 
@@ -39,6 +39,22 @@ interface BoardViewProps {
 export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
   const [activeTask, setActiveTask] = useState<any>(null);
   const [activeColumn, setActiveColumn] = useState<any>(null);
+  const [taskSearchQuery, setTaskSearchQuery] = useState('');
+
+  const filteredBoard = useMemo(() => {
+    if (!taskSearchQuery) return board;
+    const lowerQuery = taskSearchQuery.toLowerCase();
+    return {
+      ...board,
+      columns: board.columns.map(col => ({
+        ...col,
+        tasks: col.tasks.filter(task => 
+          task.title.toLowerCase().includes(lowerQuery) || 
+          (task.description && task.description.toLowerCase().includes(lowerQuery))
+        )
+      }))
+    };
+  }, [board, taskSearchQuery]);
 
   const moveTask = useMoveTask();
   const moveColumn = useMoveColumn();
@@ -195,7 +211,7 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
     }
   };
 
-  const columnIds = board.columns.map(c => c.id);
+  const columnIds = filteredBoard.columns.map(c => c.id);
 
   const dropAnimation = {
     sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }),
@@ -203,7 +219,7 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <BoardHeader board={board} />
+      <BoardHeader board={board} searchQuery={taskSearchQuery} onSearchChange={setTaskSearchQuery} />
       
       <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-[#09090b]">
         <DndContext
@@ -215,7 +231,7 @@ export function BoardView({ projectId, board, isAdmin }: BoardViewProps) {
         >
           <div className="flex items-stretch gap-6 h-fit max-h-full">
             <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-              {board.columns.map(column => (
+              {filteredBoard.columns.map(column => (
                 <KanbanColumn 
                   key={column.id}
                   projectId={projectId}

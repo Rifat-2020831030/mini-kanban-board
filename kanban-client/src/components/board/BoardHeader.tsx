@@ -1,10 +1,13 @@
+import { Search } from 'lucide-react';
 import { BoardData } from '@/hooks/useBoardData';
 
 interface BoardHeaderProps {
   board: BoardData;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
-export function BoardHeader({ board }: BoardHeaderProps) {
+export function BoardHeader({ board, searchQuery, onSearchChange }: BoardHeaderProps) {
   const members = board.members || [];
   const displayMembers = members.slice(0, 5);
   const excess = members.length - 5;
