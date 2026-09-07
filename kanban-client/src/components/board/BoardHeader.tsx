@@ -88,18 +88,19 @@ export function BoardHeader({ board, isAdmin, searchQuery, onSearchChange }: Boa
             </div>
             
             {isAdmin && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-50 transition-colors"
-                  title="Add Member"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors shadow-sm"
+                  title="Add Member to Board"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Member</span>
                 </button>
                 
                 <Link
                   href={`/settings?boardId=${board.id}`}
-                  className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-50 transition-colors"
+                  className="w-8 h-8 rounded-md flex items-center justify-center bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-50 transition-colors"
                   title="Board Settings"
                 >
                   <Settings className="w-4 h-4" />
@@ -128,6 +129,7 @@ export function BoardHeader({ board, isAdmin, searchQuery, onSearchChange }: Boa
 
       <BoardMembersModal 
         members={members} 
+        boardId={board.id}
         projectId={board.project_id}
         isAdmin={isAdmin}
         open={isModalOpen} 

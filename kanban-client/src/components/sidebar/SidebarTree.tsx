@@ -12,7 +12,8 @@ import {
   Kanban, 
   Layout, 
   Plus, 
-  Layers
+  Layers,
+  Settings
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Board, Project } from '@/types/api';
@@ -96,7 +97,14 @@ function ProjectTreeItem({ project, activeBoardId, userId }: ProjectItemProps) {
         </div>
 
         {isProjectAdmin && (
-          <div onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+            <Link
+              href="/project-settings"
+              className="p-1 text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/60 rounded transition-colors"
+              title="Project Settings"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </Link>
             <CreateBoardModal
               projectId={project.id}
               trigger={

@@ -18,7 +18,8 @@ export async function listBoardMembers(req: Request, res: Response, next: NextFu
 
 export const addBoardMemberSchema = z.object({
   body: z.object({
-    userId: z.string().uuid(),
+    userId: z.string().uuid().optional(),
+    email: z.string().email().optional(),
     role: z.enum(['OWNER', 'EDITOR', 'MEMBER']),
     jobTitle: z.string().optional(),
   }),
@@ -27,7 +28,7 @@ export const addBoardMemberSchema = z.object({
 export async function addBoardMember(req: Request, res: Response, next: NextFunction) {
   try {
     const boardId = req.params.boardId as string;
-    const { userId, role, jobTitle } = req.body;
+    const { userId, email, role, jobTitle } = req.body;
     let board = (req as any).board;
 
     if (!board) {
@@ -38,16 +39,36 @@ export async function addBoardMember(req: Request, res: Response, next: NextFunc
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Board not found' } });
     }
 
-    const projectMember = await prisma.projectMember.findUnique({
-      where: { project_id_user_id: { project_id: board.project_id, user_id: userId } },
+    let targetUserId = userId;
+    if (!targetUserId && email) {
+      const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+      if (!user) {
+        return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'No registered user found with that email' } });
+      }
+      targetUserId = user.id;
+    }
+
+    if (!targetUserId) {
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Either userId or email is required' } });
+    }
+
+    // Auto-ensure target user is a project member so Prisma relations pass
+    await prisma.projectMember.upsert({
+      where: { project_id_user_id: { project_id: board.project_id, user_id: targetUserId } },
+      create: { project_id: board.project_id, user_id: targetUserId, role: 'MEMBER' },
+      update: {},
     });
 
-    if (!projectMember) {
-      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'User must be a project member first' } });
+    const existingBoardMember = await prisma.boardMember.findUnique({
+      where: { board_id_user_id: { board_id: boardId, user_id: targetUserId } },
+    });
+
+    if (existingBoardMember) {
+      return res.status(409).json({ error: { code: 'ALREADY_MEMBER', message: 'User is already a member of this board' } });
     }
 
     const newMember = await prisma.boardMember.create({
-      data: { board_id: boardId, user_id: userId, role, job_title: jobTitle },
+      data: { board_id: boardId, user_id: targetUserId, role, job_title: jobTitle },
       include: { user: { select: { id: true, username: true, email: true } } },
     });
 
