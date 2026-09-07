@@ -20,7 +20,7 @@ export const createTaskSchema = z.object({
 
 export async function createTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId as string;
+    const boardId = (req.params.boardId as string) as string;
     const { columnId, title, description, dueDate, priority, assigneeIds, labelIds } = req.body;
     const userId = req.user!.userId;
     const boardRole = (req as any).boardRole;
@@ -95,7 +95,7 @@ export async function createTask(req: Request, res: Response, next: NextFunction
 
 export async function getTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId as string;
+    const taskId = (req.params.taskId as string) as string;
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: {
@@ -124,7 +124,7 @@ export const updateTaskSchema = z.object({
 
 export async function updateTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId;
+    const taskId = (req.params.taskId as string);
     const { title, description, dueDate, priority } = req.body;
     const boardRole = (req as any).boardRole;
     const isAssignee = (req as any).isAssignee;
@@ -160,8 +160,8 @@ export const moveTaskSchema = z.object({
 
 export async function moveTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId;
-    const boardId = req.params.boardId;
+    const taskId = (req.params.taskId as string);
+    const boardId = (req.params.boardId as string);
     const { toColumnId, afterTaskId } = req.body;
     const userId = req.user!.userId;
     const currentTask = (req as any).task;
@@ -229,7 +229,7 @@ export async function moveTask(req: Request, res: Response, next: NextFunction) 
 
 export async function deleteTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId;
+    const taskId = (req.params.taskId as string);
 
     await prisma.task.update({
       where: { id: taskId },
@@ -246,7 +246,7 @@ export async function deleteTask(req: Request, res: Response, next: NextFunction
 
 export async function getTaskLifecycle(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId;
+    const taskId = (req.params.taskId as string);
 
     const events = await prisma.taskLifecycleEvent.findMany({
       where: { task_id: taskId },

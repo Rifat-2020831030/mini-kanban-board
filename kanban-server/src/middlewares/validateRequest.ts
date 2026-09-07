@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject, ZodError } from 'zod';
+import { ZodObject, ZodError } from 'zod';
 
-export function validate(schema: AnyZodObject) {
+export function validate(schema: ZodObject<any, any>) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       await schema.parseAsync({
@@ -16,7 +16,7 @@ export function validate(schema: AnyZodObject) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid request data',
-            details: error.errors,
+            details: error.issues,
           },
         });
       }

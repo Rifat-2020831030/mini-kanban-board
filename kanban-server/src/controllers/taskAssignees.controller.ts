@@ -10,7 +10,7 @@ export const addAssigneeSchema = z.object({
 
 export async function addAssignee(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId as string;
+    const taskId = (req.params.taskId as string) as string;
     const { userId } = req.body;
     const assignedBy = req.user!.userId;
     const task = (req as any).task;
@@ -53,8 +53,8 @@ export async function addAssignee(req: Request, res: Response, next: NextFunctio
 
 export async function removeAssignee(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId as string;
-    const userId = req.params.userId as string;
+    const taskId = (req.params.taskId as string) as string;
+    const userId = (req.params.userId as string) as string;
 
     await prisma.taskAssignee.delete({
       where: { task_id_user_id: { task_id: taskId, user_id: userId } },

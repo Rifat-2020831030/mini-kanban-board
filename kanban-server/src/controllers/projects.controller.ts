@@ -81,7 +81,7 @@ export const updateProjectSchema = z.object({
 
 export async function updateProject(req: Request, res: Response, next: NextFunction) {
   try {
-    const projectId = req.params.projectId as string;
+    const projectId = (req.params.projectId as string) as string;
     const { name, description } = req.body;
 
     const project = await prisma.project.update({

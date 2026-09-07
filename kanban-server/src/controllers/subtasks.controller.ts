@@ -13,7 +13,7 @@ export const createSubtaskSchema = z.object({
 
 export async function createSubtask(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId;
+    const taskId = (req.params.taskId as string);
     const { title } = req.body;
 
     const lastSubtask = await prisma.subtask.findFirst({
@@ -45,8 +45,8 @@ export const updateSubtaskSchema = z.object({
 
 export async function updateSubtask(req: Request, res: Response, next: NextFunction) {
   try {
-    const subtaskId = req.params.subtaskId;
-    const taskId = req.params.taskId;
+    const subtaskId = (req.params.subtaskId as string);
+    const taskId = (req.params.taskId as string);
     const { title, isCompleted, afterSubtaskId } = req.body;
 
     const data: any = {};
@@ -89,7 +89,7 @@ export async function updateSubtask(req: Request, res: Response, next: NextFunct
 
 export async function deleteSubtask(req: Request, res: Response, next: NextFunction) {
   try {
-    const subtaskId = req.params.subtaskId;
+    const subtaskId = (req.params.subtaskId as string);
 
     await prisma.subtask.delete({ where: { id: subtaskId } });
 

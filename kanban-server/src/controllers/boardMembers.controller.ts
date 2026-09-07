@@ -5,7 +5,7 @@ import { io } from '../socket';
 
 export async function listBoardMembers(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId as string;
+    const boardId = (req.params.boardId as string) as string;
     const members = await prisma.boardMember.findMany({
       where: { board_id: boardId },
       include: { user: { select: { id: true, username: true, email: true } } },
@@ -27,7 +27,7 @@ export const addBoardMemberSchema = z.object({
 
 export async function addBoardMember(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId as string;
+    const boardId = (req.params.boardId as string) as string;
     const { userId, email, role, jobTitle } = req.body;
     let board = (req as any).board;
 
@@ -88,7 +88,7 @@ export const updateBoardMemberSchema = z.object({
 
 export async function updateBoardMember(req: Request, res: Response, next: NextFunction) {
   try {
-    const memberId = req.params.memberId as string;
+    const memberId = (req.params.memberId as string) as string;
     const { role, jobTitle } = req.body;
 
     const member = await prisma.boardMember.update({
@@ -106,7 +106,7 @@ export async function updateBoardMember(req: Request, res: Response, next: NextF
 
 export async function removeBoardMember(req: Request, res: Response, next: NextFunction) {
   try {
-    const memberId = req.params.memberId as string;
+    const memberId = (req.params.memberId as string) as string;
     const isProjectAdmin = (req as any).isProjectAdmin;
 
     const member = await prisma.boardMember.findUnique({ where: { id: memberId } });

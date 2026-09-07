@@ -19,7 +19,7 @@ export const bulkCreateColumnSchema = z.object({
 
 export async function createColumn(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId;
+    const boardId = (req.params.boardId as string);
     const { name } = req.body;
 
     const lastCol = await prisma.column.findFirst({
@@ -42,7 +42,7 @@ export async function createColumn(req: Request, res: Response, next: NextFuncti
 
 export async function bulkCreateColumns(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId;
+    const boardId = (req.params.boardId as string);
     const { names } = req.body;
 
     const lastCol = await prisma.column.findFirst({
@@ -79,7 +79,7 @@ export const renameColumnSchema = z.object({
 
 export async function renameColumn(req: Request, res: Response, next: NextFunction) {
   try {
-    const columnId = req.params.columnId;
+    const columnId = (req.params.columnId as string);
     const { name } = req.body;
 
     const column = await prisma.column.update({
@@ -102,8 +102,8 @@ export const moveColumnSchema = z.object({
 
 export async function moveColumn(req: Request, res: Response, next: NextFunction) {
   try {
-    const columnId = req.params.columnId;
-    const boardId = req.params.boardId;
+    const columnId = (req.params.columnId as string);
+    const boardId = (req.params.boardId as string);
     const { afterColumnId } = req.body;
 
     let afterCol = null;
@@ -150,7 +150,7 @@ export async function moveColumn(req: Request, res: Response, next: NextFunction
 
 export async function deleteColumn(req: Request, res: Response, next: NextFunction) {
   try {
-    const columnId = req.params.columnId;
+    const columnId = (req.params.columnId as string);
 
     await prisma.$transaction(async (tx) => {
       const now = new Date();

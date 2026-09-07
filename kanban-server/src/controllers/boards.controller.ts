@@ -56,7 +56,7 @@ export async function createBoard(req: Request, res: Response, next: NextFunctio
 
 export async function listBoards(req: Request, res: Response, next: NextFunction) {
   try {
-    const projectId = req.query.projectId as string;
+    const projectId = (req.query.projectId as string) as string;
     const userId = req.user!.userId;
 
     if (!projectId) {
@@ -97,7 +97,7 @@ export async function listBoards(req: Request, res: Response, next: NextFunction
 
 export async function getBoardById(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId;
+    const boardId = (req.params.boardId as string);
 
     const board = await prisma.board.findUnique({
       where: { id: boardId },
@@ -141,7 +141,7 @@ export const updateBoardSchema = z.object({
 
 export async function updateBoard(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId;
+    const boardId = (req.params.boardId as string);
     const { name, description } = req.body;
 
     const board = await prisma.board.update({
@@ -157,7 +157,7 @@ export async function updateBoard(req: Request, res: Response, next: NextFunctio
 
 export async function deleteBoard(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId;
+    const boardId = (req.params.boardId as string);
 
     await prisma.$transaction(async (tx) => {
       const now = new Date();

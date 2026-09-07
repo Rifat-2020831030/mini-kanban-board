@@ -4,7 +4,7 @@ import { prisma } from '../db';
 
 export async function listMembers(req: Request, res: Response, next: NextFunction) {
   try {
-    const projectId = req.params.projectId as string;
+    const projectId = (req.params.projectId as string) as string;
     const members = await prisma.projectMember.findMany({
       where: { project_id: projectId },
       include: { user: { select: { id: true, username: true, email: true } } },
@@ -24,7 +24,7 @@ export const inviteMemberSchema = z.object({
 
 export async function inviteMember(req: Request, res: Response, next: NextFunction) {
   try {
-    const projectId = req.params.projectId as string;
+    const projectId = (req.params.projectId as string) as string;
     const { email, role } = req.body;
     const userId = req.user!.userId;
 
@@ -89,8 +89,8 @@ export const updateMemberRoleSchema = z.object({
 
 export async function updateMemberRole(req: Request, res: Response, next: NextFunction) {
   try {
-    const projectId = req.params.projectId as string;
-    const memberId = req.params.memberId as string;
+    const projectId = (req.params.projectId as string) as string;
+    const memberId = (req.params.memberId as string) as string;
     const { role } = req.body;
 
     const member = await prisma.$transaction(async (tx) => {
@@ -122,7 +122,7 @@ export async function updateMemberRole(req: Request, res: Response, next: NextFu
 
 export async function removeMember(req: Request, res: Response, next: NextFunction) {
   try {
-    const memberId = req.params.memberId as string;
+    const memberId = (req.params.memberId as string) as string;
     
     const member = await prisma.projectMember.findUnique({ where: { id: memberId } });
     if (!member) {

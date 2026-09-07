@@ -5,7 +5,7 @@ import { io } from '../socket';
 
 export async function listLabels(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId;
+    const boardId = (req.params.boardId as string);
     const labels = await prisma.label.findMany({ where: { board_id: boardId } });
     res.json(labels);
   } catch (err) {
@@ -22,7 +22,7 @@ export const createLabelSchema = z.object({
 
 export async function createLabel(req: Request, res: Response, next: NextFunction) {
   try {
-    const boardId = req.params.boardId;
+    const boardId = (req.params.boardId as string);
     const { name, color } = req.body;
 
     const label = await prisma.label.create({
@@ -45,7 +45,7 @@ export const updateLabelSchema = z.object({
 
 export async function updateLabel(req: Request, res: Response, next: NextFunction) {
   try {
-    const labelId = req.params.labelId;
+    const labelId = (req.params.labelId as string);
     const { name, color } = req.body;
 
     const label = await prisma.label.update({
@@ -62,7 +62,7 @@ export async function updateLabel(req: Request, res: Response, next: NextFunctio
 
 export async function deleteLabel(req: Request, res: Response, next: NextFunction) {
   try {
-    const labelId = req.params.labelId;
+    const labelId = (req.params.labelId as string);
 
     const label = await prisma.label.findUnique({ where: { id: labelId } });
     await prisma.label.delete({ where: { id: labelId } });
@@ -85,7 +85,7 @@ export const tagTaskSchema = z.object({
 
 export async function tagTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId;
+    const taskId = (req.params.taskId as string);
     const { labelId } = req.body;
 
     const tag = await prisma.taskLabel.create({
@@ -102,8 +102,8 @@ export async function tagTask(req: Request, res: Response, next: NextFunction) {
 
 export async function untagTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const taskId = req.params.taskId;
-    const labelId = req.params.labelId;
+    const taskId = (req.params.taskId as string);
+    const labelId = (req.params.labelId as string);
 
     await prisma.taskLabel.delete({
       where: { task_id_label_id: { task_id: taskId, label_id: labelId } },
